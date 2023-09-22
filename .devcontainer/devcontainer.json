@@ -1,0 +1,13 @@
+{
+    "name": "dotnet7.0",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:7.0",
+    "postStartCommand": "dotnet tool restore",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ionide.ionide-fsharp",
+                "ms-dotnettools.csharp"
+            ]
+        }
+    }
+}
