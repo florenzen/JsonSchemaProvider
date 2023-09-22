@@ -13,3 +13,6 @@ printfn "%s" (foo.FobSnd())
 
 printfn "%s" (foo.FobSnd())
 
+let x = FooPair.Baz()
+
+printfn "%s" (x.FobSnd())

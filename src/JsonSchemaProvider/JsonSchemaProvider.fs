@@ -51,14 +51,23 @@ type JsonSchemaProvider(config: TypeProviderConfig) as this =
                         ty.AddMember(fst)
                         ty.AddMember(snd)
 
+                        let baz =
+                            ProvidedMethod(
+                                methodName = "Baz",
+                                parameters = [],
+                                returnType = ty,
+                                isStatic = true,
+                                invokeCode = fun args -> <@@ PPair("left" + prefix, "right" + prefix) @@>
+                            )
+
+                        ty.AddMember(baz)
+
                         let ctor =
                             ProvidedConstructor(
                                 parameters =
                                     [ ProvidedParameter("fst", typeof<string>)
                                       ProvidedParameter("snd", typeof<string>) ],
-                                invokeCode =
-                                    fun args ->
-                                        <@@ PPair((%%(args[0]): string), (%%(args[1]): string)) @@>
+                                invokeCode = fun args -> <@@ PPair((%%(args[0]): string), (%%(args[1]): string)) @@>
                             )
 
                         ty.AddMember(ctor)
