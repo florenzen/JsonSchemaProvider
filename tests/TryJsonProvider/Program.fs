@@ -35,9 +35,6 @@ let schemaSource = """{
     "post-office-box": {
       "type": "string"
     },
-    "extended-address": {
-      "type": "string"
-    },
     "street-address": {
       "type": "string"
     },
@@ -63,13 +60,30 @@ let schemaSource = """{
     "code": {
         "type": "integer"
     },
-    "again": { "type": "boolean"}
+    "again": { "type": "boolean"},
+    "list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "List2": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "l2a": {
+            "type": "string"
+          },
+          "l2b": {
+            "type": "string"
+          }
+        },
+        "required": ["l2b"]
+      }
+    }
   },
-  "required": [ "locality", "region", "country-name" ],
-  "dependentRequired": {
-    "post-office-box": [ "street-address" ],
-    "extended-address": [ "street-address" ]
-  }
+  "required": [ "locality", "region", "country-name" ]
 }"""
 
 let data = """{
@@ -79,7 +93,9 @@ let data = """{
     "country-name": "ger",
     "nested": {"propa": "AA", "propb": "BB"},
     "code": 17,
-    "again": true
+    "again": true,
+    "list": ["a","b"],
+    "List2": [{"l2a": "XX", "l2b": "YY"}]
 }"""
 
 let data1 = """{
@@ -105,6 +121,7 @@ type Addr = JsonSchemaProvider<schema=schemaSource>
 let d = Addr.Parse(data)
 
 printfn "%s" (d.region)
-printfn "%s" (d.nested.propa)
-printfn "%d" (d.code)
+printfn "%O" (d.nested |> Option.map (fun x -> x.propa))
+printfn "%d" (d.code |> Option.get)
 printfn "%O" (d.again)
+printfn "%O" (d.List2 |> List.head |> fun x -> x.l2b)
