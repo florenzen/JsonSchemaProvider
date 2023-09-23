@@ -19,7 +19,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     let jsonSchemaTy =
         ProvidedTypeDefinition(thisAssembly, namespaceName, "JsonSchemaProvider", baseType = Some baseTy)
 
-    let rec generateSelectorsForObject
+    let rec generatePropertiesForObject
         (ty: ProvidedTypeDefinition)
         (props: IDictionary<string, JsonSchemaProperty>)
         (requiredProps: ICollection<string>)
@@ -28,6 +28,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let name = prop.Key
             let propType = prop.Value.Type
             let isRequired = requiredProps.Contains(name)
+
             let returnType =
                 match propType with
                 | JsonObjectType.String -> if isRequired then typeof<string> else typeof<string option>
@@ -38,32 +39,86 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     let innerTy =
                         ProvidedTypeDefinition(thisAssembly, namespaceName, name, baseType = Some baseTy)
 
-                    generateSelectorsForObject innerTy prop.Value.Properties |> ignore
+                    generatePropertiesForObject innerTy prop.Value.Properties prop.Value.RequiredProperties
+                    |> ignore
+
                     ty.AddMember(innerTy)
 
-                    if requiredProps.Contains(name) then innerTy else innerTy
+                    if isRequired then
+                        innerTy
+                    else
+                        let opt = typedefof<option<_>>
+                        opt.MakeGenericType(innerTy)
                 | _ -> failwith $"Unsupported type {propType}"
 
-            let accessor =
+            let property =
                 ProvidedProperty(
                     propertyName = name,
                     propertyType = returnType,
                     getterCode =
-                        fun args ->
-                            <@@
-                                let jval = (%%args[0]: JsonValue).TryGetProperty(name)
-                                let unwrap jval = if isRequired then (Option.get jval):>obj else jval:>obj
-                                match propType with
-                                | JsonObjectType.String -> Option.map (fun (x:JsonValue )-> x.AsString()) jval |> unwrap
-                                // | JsonObjectType.Boolean -> Option.map (fun x -> x.AsBoolean():>obj) jval |> unwrap
-                                // | JsonObjectType.Integer -> Option.map (fun x -> x.AsInteger():>obj) jval |> unwrap
-                                // | JsonObjectType.Number -> Option.map (fun x -> x.AsFloat():>obj) jval |> unwrap
-                                // | JsonObjectType.Object -> jval: obj
-                                | _ -> failwith $"Unsupported type {propType}"
-                            @@>
+                        if isRequired then
+                            match propType with
+                            | JsonObjectType.String ->
+                                fun args ->
+                                    <@@
+                                        let jsonVal = (%%args[0]: JsonValue)[name]
+                                        jsonVal.AsString()
+                                    @@>
+                            | JsonObjectType.Boolean ->
+                                fun args ->
+                                    <@@
+                                        let jsonVal = (%%args[0]: JsonValue)[name]
+                                        jsonVal.AsBoolean()
+                                    @@>
+                            | JsonObjectType.Integer ->
+                                fun args ->
+                                    <@@
+                                        let jsonVal = (%%args[0]: JsonValue)[name]
+                                        jsonVal.AsInteger()
+                                    @@>
+                            | JsonObjectType.Number ->
+                                fun args ->
+                                    <@@
+                                        let jsonVal = (%%args[0]: JsonValue)[name]
+                                        jsonVal.AsFloat()
+                                    @@>
+                            | JsonObjectType.Object ->
+                                fun args ->
+                                    <@@ (%%args[0]: JsonValue)[name]
+
+                                    @@>
+                            | _ -> failwithf "Unsupported type %O" propType
+                        else
+                            match propType with
+                            | JsonObjectType.String ->
+                                fun args ->
+                                    <@@
+                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                        maybeJsonVal |> Option.map (fun jsonVal -> jsonVal.AsString())
+                                    @@>
+                            | JsonObjectType.Boolean ->
+                                fun args ->
+                                    <@@
+                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                        maybeJsonVal |> Option.map (fun jsonVal -> jsonVal.AsBoolean())
+                                    @@>
+                            | JsonObjectType.Integer ->
+                                fun args ->
+                                    <@@
+                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                        maybeJsonVal |> Option.map (fun jsonVal -> jsonVal.AsInteger())
+                                    @@>
+                            | JsonObjectType.Number ->
+                                fun args ->
+                                    <@@
+                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                        maybeJsonVal |> Option.map (fun jsonVal -> jsonVal.AsFloat())
+                                    @@>
+                            | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: JsonValue).TryGetProperty(name) @@>
+                            | _ -> failwithf "Unsupported type %O" propType
                 )
 
-            ty.AddMember(accessor)
+            ty.AddMember(property)
 
         ty
 
@@ -85,7 +140,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schema.Type <> JsonObjectType.Object then
                             failwith "Only object supported"
 
-                        generateSelectorsForObject ty schema.Properties schema.RequiredProperties|> ignore
+                        generatePropertiesForObject ty schema.Properties schema.RequiredProperties
+                        |> ignore
 
                         let parse =
                             ProvidedMethod(
@@ -113,7 +169,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         ty.AddMember(parse)
 
                         ty
-                    | _ -> failwith "unexpected paramter values"
+                    | paramValues -> failwithf "Unexpected parameter values %O" paramValues
         )
 
     do this.AddNamespace(namespaceName, [ jsonSchemaTy ])
