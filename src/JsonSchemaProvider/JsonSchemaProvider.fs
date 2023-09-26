@@ -305,3 +305,7 @@ do ()
 // https://medium.com/@haumohio/the-trips-and-traps-of-creating-a-generative-type-provider-in-f-75162d99622c
 // http://blog.mavnn.co.uk/type-providers-from-the-ground-up/
 // https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/383
+//
+// TODO
+// - automatic tests
+// - builder functions
