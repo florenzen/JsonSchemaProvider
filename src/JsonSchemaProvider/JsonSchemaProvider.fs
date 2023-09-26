@@ -42,7 +42,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name, baseType = Some baseTy)
 
-            generatePropertiesForObject innerTy properties requiredProperties |> ignore
+            generatePropertiesAndBuilderForObject innerTy properties requiredProperties
+            |> ignore
 
             ty.AddMember(innerTy)
 
@@ -53,7 +54,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 opt.MakeGenericType(innerTy)
         | _ -> failwithf "Unsupported type %O" propType
 
-    and generatePropertiesForObject
+    and generatePropertiesAndBuilderForObject
         (ty: ProvidedTypeDefinition)
         (properties: IDictionary<string, JsonSchemaProperty>)
         (requiredProperties: ICollection<string>)
@@ -244,6 +245,18 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
             ty.AddMember(property)
 
+        let parametersForProperties = []
+
+        let builder =
+            ProvidedMethod(
+                methodName = "Create",
+                parameters = parametersForProperties,
+                returnType = ty,
+                isStatic = true,
+                invokeCode = fun args -> <@@ JsonValue.Record([||]) @@>
+            )
+
+        ty.AddMember(builder)
         ty
 
     do
@@ -264,7 +277,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schema.Type <> JsonObjectType.Object then
                             failwith "Only object supported"
 
-                        generatePropertiesForObject ty schema.Properties schema.RequiredProperties
+                        generatePropertiesAndBuilderForObject ty schema.Properties schema.RequiredProperties
                         |> ignore
 
                         let parse =
