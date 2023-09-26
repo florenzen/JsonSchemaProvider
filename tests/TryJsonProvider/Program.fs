@@ -138,6 +138,9 @@ let schemaSource2 = """{
     },
     "Y": {
       "type": "string"
+    },
+    "Z": {
+      "type": "integer"
     }
   }
 }"""

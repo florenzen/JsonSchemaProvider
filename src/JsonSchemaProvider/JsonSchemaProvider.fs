@@ -258,25 +258,40 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                           (ProvidedParameter(name, returnType, false), propType, isRequired)
                       else
                           let returnTypeWithoutOption = returnType.GenericTypeArguments[0]
-                          (ProvidedParameter(name, returnTypeWithoutOption, false, null), propType, isRequired) ]
+
+                          let (nullableReturnType, defaultValue) =
+                              if returnTypeWithoutOption.IsValueType then
+                                  ((typedefof<System.Nullable<_>>).MakeGenericType([| returnTypeWithoutOption |]),
+                                   System.Nullable() :> obj)
+                              else
+                                  (returnTypeWithoutOption, null :> obj)
+
+                          (ProvidedParameter(name, nullableReturnType, false, defaultValue), propType, isRequired) ]
 
         let create =
-            let processArgs
-                (args: Quotations.Expr list) =
-                    [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
-                          let name = parameter.Name
+            let processArgs (args: Quotations.Expr list) =
+                [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
+                      let name = parameter.Name
 
-                          yield
-                              (match (propType, isRequired) with
-                               | (JsonObjectType.String, true) ->
-                                   <@@ [| (name, JsonValue.String(%%arg: string)) |] @@>
-                               | (JsonObjectType.String, false) ->
-                                   <@@
-                                       match %%arg: string with
-                                       | null -> [||]
-                                       | value -> [| (name, JsonValue.String(value)) |]
-                                   @@>
-                               | _ -> <@@ [||] @@>) ]
+                      yield
+                          (match (propType, isRequired) with
+                           | (JsonObjectType.String, true) -> <@@ [| (name, JsonValue.String(%%arg: string)) |] @@>
+                           | (JsonObjectType.String, false) ->
+                               <@@
+                                   match %%arg: string with
+                                   | null -> [||]   
+                                   | value -> [| (name, JsonValue.String(value)) |]
+                               @@>
+                           | (JsonObjectType.Integer, true) ->
+                               <@@ [| (name, JsonValue.Float((%%arg: int) |> float)) |] @@>
+                           | (JsonObjectType.Integer, false) ->
+                               <@@
+                                   if (%%arg: System.Nullable<int>).HasValue then
+                                       [| (name, JsonValue.Float((%%arg: System.Nullable<int>).Value)) |]
+                                   else
+                                       [||]
+                               @@>
+                           | _ -> <@@ [||] @@>) ]
 
             ProvidedMethod(
                 methodName = "Create",
