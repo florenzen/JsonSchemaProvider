@@ -21,8 +21,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     let rec determineReturnType
         (name: string)
         (item: JsonSchema)
-        (props: IDictionary<string, JsonSchemaProperty>)
-        (requiredProps: ICollection<string>)
+        (properties: IDictionary<string, JsonSchemaProperty>)
+        (requiredProperties: ICollection<string>)
         (ty: ProvidedTypeDefinition)
         (isRequired: bool)
         (propType: JsonObjectType)
@@ -42,7 +42,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name, baseType = Some baseTy)
 
-            generatePropertiesForObject innerTy props requiredProps |> ignore
+            generatePropertiesForObject innerTy properties requiredProperties |> ignore
 
             ty.AddMember(innerTy)
 
@@ -55,13 +55,13 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
     and generatePropertiesForObject
         (ty: ProvidedTypeDefinition)
-        (props: IDictionary<string, JsonSchemaProperty>)
-        (requiredProps: ICollection<string>)
+        (properties: IDictionary<string, JsonSchemaProperty>)
+        (requiredProperties: ICollection<string>)
         =
-        for prop in props do
+        for prop in properties do
             let name = prop.Key
             let propType = prop.Value.Type
-            let isRequired = requiredProps.Contains(name)
+            let isRequired = requiredProperties.Contains(name)
 
             let returnType =
                 determineReturnType
