@@ -125,3 +125,25 @@ printfn "%O" (d.nested |> Option.map (fun x -> x.propa))
 printfn "%d" (d.code |> Option.get)
 printfn "%O" (d.again)
 printfn "%O" (d.List2 |> List.head |> fun x -> x.l2b)
+
+
+[<Literal>]
+let schemaSource2 = """{
+  "$id": "https://example.com/address.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "X": {
+      "type": "string"
+    },
+    "Y": {
+      "type": "string"
+    }
+  }
+}"""
+
+type Json2 = JsonSchemaProvider<schema=schemaSource2>
+
+let c = Json2.Create(Y="xx", X="yy")
+
+printf "%O" c

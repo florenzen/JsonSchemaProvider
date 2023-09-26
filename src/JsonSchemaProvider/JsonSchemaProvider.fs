@@ -42,7 +42,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name, baseType = Some baseTy)
 
-            generatePropertiesAndBuilderForObject innerTy properties requiredProperties
+            generatePropertiesAndCreateForObject innerTy properties requiredProperties
             |> ignore
 
             ty.AddMember(innerTy)
@@ -54,209 +54,248 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 opt.MakeGenericType(innerTy)
         | _ -> failwithf "Unsupported type %O" propType
 
-    and generatePropertiesAndBuilderForObject
+    and generatePropertiesAndCreateForObject
         (ty: ProvidedTypeDefinition)
         (properties: IDictionary<string, JsonSchemaProperty>)
         (requiredProperties: ICollection<string>)
         =
-        for prop in properties do
-            let name = prop.Key
-            let propType = prop.Value.Type
-            let isRequired = requiredProperties.Contains(name)
+        let parametersForCreate =
+            [ for prop in properties do
+                  let name = prop.Key
+                  let propType = prop.Value.Type
+                  let isRequired = requiredProperties.Contains(name)
 
-            let returnType =
-                determineReturnType
-                    name
-                    prop.Value.Item
-                    prop.Value.Properties
-                    prop.Value.RequiredProperties
-                    ty
-                    isRequired
-                    propType
+                  let returnType =
+                      determineReturnType
+                          name
+                          prop.Value.Item
+                          prop.Value.Properties
+                          prop.Value.RequiredProperties
+                          ty
+                          isRequired
+                          propType
 
-            let property =
-                ProvidedProperty(
-                    propertyName = name,
-                    propertyType = returnType,
-                    getterCode =
-                        if isRequired then
-                            match propType with
-                            | JsonObjectType.String ->
-                                fun args ->
-                                    <@@
-                                        let jsonVal = (%%args[0]: JsonValue)[name]
-                                        jsonVal.AsString()
-                                    @@>
-                            | JsonObjectType.Boolean ->
-                                fun args ->
-                                    <@@
-                                        let jsonVal = (%%args[0]: JsonValue)[name]
-                                        jsonVal.AsBoolean()
-                                    @@>
-                            | JsonObjectType.Integer ->
-                                fun args ->
-                                    <@@
-                                        let jsonVal = (%%args[0]: JsonValue)[name]
-                                        jsonVal.AsInteger()
-                                    @@>
-                            | JsonObjectType.Number ->
-                                fun args ->
-                                    <@@
-                                        let jsonVal = (%%args[0]: JsonValue)[name]
-                                        jsonVal.AsFloat()
-                                    @@>
-                            | JsonObjectType.Array ->
-                                match prop.Value.Item.Type with
-                                | JsonObjectType.String ->
-                                    fun args ->
-                                        <@@
-                                            let jsonVal = (%%args[0]: JsonValue)[name]
+                  let property =
+                      ProvidedProperty(
+                          propertyName = name,
+                          propertyType = returnType,
+                          getterCode =
+                              if isRequired then
+                                  match propType with
+                                  | JsonObjectType.String ->
+                                      fun args ->
+                                          <@@
+                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              jsonVal.AsString()
+                                          @@>
+                                  | JsonObjectType.Boolean ->
+                                      fun args ->
+                                          <@@
+                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              jsonVal.AsBoolean()
+                                          @@>
+                                  | JsonObjectType.Integer ->
+                                      fun args ->
+                                          <@@
+                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              jsonVal.AsInteger()
+                                          @@>
+                                  | JsonObjectType.Number ->
+                                      fun args ->
+                                          <@@
+                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              jsonVal.AsFloat()
+                                          @@>
+                                  | JsonObjectType.Array ->
+                                      match prop.Value.Item.Type with
+                                      | JsonObjectType.String ->
+                                          fun args ->
+                                              <@@
+                                                  let jsonVal = (%%args[0]: JsonValue)[name]
 
-                                            jsonVal.AsArray()
-                                            |> List.ofArray
-                                            |> List.map (fun jsonVal -> jsonVal.AsString())
-                                        @@>
-                                | JsonObjectType.Boolean ->
-                                    fun args ->
-                                        <@@
-                                            let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  jsonVal.AsArray()
+                                                  |> List.ofArray
+                                                  |> List.map (fun jsonVal -> jsonVal.AsString())
+                                              @@>
+                                      | JsonObjectType.Boolean ->
+                                          fun args ->
+                                              <@@
+                                                  let jsonVal = (%%args[0]: JsonValue)[name]
 
-                                            jsonVal.AsArray()
-                                            |> List.ofArray
-                                            |> List.map (fun jsonVal -> jsonVal.AsBoolean())
-                                        @@>
-                                | JsonObjectType.Integer ->
-                                    fun args ->
-                                        <@@
-                                            let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  jsonVal.AsArray()
+                                                  |> List.ofArray
+                                                  |> List.map (fun jsonVal -> jsonVal.AsBoolean())
+                                              @@>
+                                      | JsonObjectType.Integer ->
+                                          fun args ->
+                                              <@@
+                                                  let jsonVal = (%%args[0]: JsonValue)[name]
 
-                                            jsonVal.AsArray()
-                                            |> List.ofArray
-                                            |> List.map (fun jsonVal -> jsonVal.AsInteger())
-                                        @@>
-                                | JsonObjectType.Number ->
-                                    fun args ->
-                                        <@@
-                                            let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  jsonVal.AsArray()
+                                                  |> List.ofArray
+                                                  |> List.map (fun jsonVal -> jsonVal.AsInteger())
+                                              @@>
+                                      | JsonObjectType.Number ->
+                                          fun args ->
+                                              <@@
+                                                  let jsonVal = (%%args[0]: JsonValue)[name]
 
-                                            jsonVal.AsArray()
-                                            |> List.ofArray
-                                            |> List.map (fun jsonVal -> jsonVal.AsFloat())
-                                        @@>
-                                | JsonObjectType.Object ->
-                                    fun args ->
-                                        <@@
-                                            let jsonVal = (%%args[0]: JsonValue)[name]
-                                            jsonVal.AsArray() |> List.ofArray
-                                        @@>
-                                | _ -> failwithf "Unsupported type %O" propType
-                            | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: JsonValue)[name] @@>
-                            | _ -> failwithf "Unsupported type %O" propType
-                        else
-                            match propType with
-                            | JsonObjectType.String ->
-                                fun args ->
-                                    <@@
-                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
-                                        maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsString())
-                                    @@>
-                            | JsonObjectType.Boolean ->
-                                fun args ->
-                                    <@@
-                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
-                                        maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsBoolean())
-                                    @@>
-                            | JsonObjectType.Integer ->
-                                fun args ->
-                                    <@@
-                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
-                                        maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsInteger())
-                                    @@>
-                            | JsonObjectType.Number ->
-                                fun args ->
-                                    <@@
-                                        let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
-                                        maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsFloat())
-                                    @@>
-                            | JsonObjectType.Array ->
-                                match prop.Value.Item.Type with
-                                | JsonObjectType.String ->
-                                    fun args ->
-                                        <@@
-                                            let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  jsonVal.AsArray()
+                                                  |> List.ofArray
+                                                  |> List.map (fun jsonVal -> jsonVal.AsFloat())
+                                              @@>
+                                      | JsonObjectType.Object ->
+                                          fun args ->
+                                              <@@
+                                                  let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  jsonVal.AsArray() |> List.ofArray
+                                              @@>
+                                      | _ -> failwithf "Unsupported type %O" propType
+                                  | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: JsonValue)[name] @@>
+                                  | _ -> failwithf "Unsupported type %O" propType
+                              else
+                                  match propType with
+                                  | JsonObjectType.String ->
+                                      fun args ->
+                                          <@@
+                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-                                            match maybeJsonVal with
-                                            | None -> List.empty
-                                            | Some(jsonVal) ->
-                                                jsonVal.AsArray()
-                                                |> List.ofArray
-                                                |> List.map (fun jsonVal -> jsonVal.AsString())
-                                        @@>
-                                | JsonObjectType.Boolean ->
-                                    fun args ->
-                                        <@@
-                                            let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              maybeJsonVal
+                                              |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsString())
+                                          @@>
+                                  | JsonObjectType.Boolean ->
+                                      fun args ->
+                                          <@@
+                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-                                            match maybeJsonVal with
-                                            | None -> List.empty
-                                            | Some(jsonVal) ->
-                                                jsonVal.AsArray()
-                                                |> List.ofArray
-                                                |> List.map (fun jsonVal -> jsonVal.AsBoolean())
-                                        @@>
-                                | JsonObjectType.Integer ->
-                                    fun args ->
-                                        <@@
-                                            let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              maybeJsonVal
+                                              |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsBoolean())
+                                          @@>
+                                  | JsonObjectType.Integer ->
+                                      fun args ->
+                                          <@@
+                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-                                            match maybeJsonVal with
-                                            | None -> List.empty
-                                            | Some(jsonVal) ->
-                                                jsonVal.AsArray()
-                                                |> List.ofArray
-                                                |> List.map (fun jsonVal -> jsonVal.AsInteger())
-                                        @@>
-                                | JsonObjectType.Number ->
-                                    fun args ->
-                                        <@@
-                                            let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              maybeJsonVal
+                                              |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsInteger())
+                                          @@>
+                                  | JsonObjectType.Number ->
+                                      fun args ->
+                                          <@@
+                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsFloat())
+                                          @@>
+                                  | JsonObjectType.Array ->
+                                      match prop.Value.Item.Type with
+                                      | JsonObjectType.String ->
+                                          fun args ->
+                                              <@@
+                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-                                            match maybeJsonVal with
-                                            | None -> List.empty
-                                            | Some(jsonVal) ->
-                                                jsonVal.AsArray()
-                                                |> List.ofArray
-                                                |> List.map (fun jsonVal -> jsonVal.AsFloat())
-                                        @@>
-                                | JsonObjectType.Object ->
-                                    fun args ->
-                                        <@@
-                                            let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  match maybeJsonVal with
+                                                  | None -> List.empty
+                                                  | Some(jsonVal) ->
+                                                      jsonVal.AsArray()
+                                                      |> List.ofArray
+                                                      |> List.map (fun jsonVal -> jsonVal.AsString())
+                                              @@>
+                                      | JsonObjectType.Boolean ->
+                                          fun args ->
+                                              <@@
+                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-                                            match maybeJsonVal with
-                                            | None -> List.empty
-                                            | Some(jsonVal) -> jsonVal.AsArray() |> List.ofArray
+                                                  match maybeJsonVal with
+                                                  | None -> List.empty
+                                                  | Some(jsonVal) ->
+                                                      jsonVal.AsArray()
+                                                      |> List.ofArray
+                                                      |> List.map (fun jsonVal -> jsonVal.AsBoolean())
+                                              @@>
+                                      | JsonObjectType.Integer ->
+                                          fun args ->
+                                              <@@
+                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-                                        @@>
-                                | _ -> failwithf "Unsupported type %O" propType
-                            | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: JsonValue).TryGetProperty(name) @@>
-                            | _ -> failwithf "Unsupported type %O" propType
-                )
+                                                  match maybeJsonVal with
+                                                  | None -> List.empty
+                                                  | Some(jsonVal) ->
+                                                      jsonVal.AsArray()
+                                                      |> List.ofArray
+                                                      |> List.map (fun jsonVal -> jsonVal.AsInteger())
+                                              @@>
+                                      | JsonObjectType.Number ->
+                                          fun args ->
+                                              <@@
+                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-            ty.AddMember(property)
+                                                  match maybeJsonVal with
+                                                  | None -> List.empty
+                                                  | Some(jsonVal) ->
+                                                      jsonVal.AsArray()
+                                                      |> List.ofArray
+                                                      |> List.map (fun jsonVal -> jsonVal.AsFloat())
+                                              @@>
+                                      | JsonObjectType.Object ->
+                                          fun args ->
+                                              <@@
+                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
 
-        let parametersForProperties = []
+                                                  match maybeJsonVal with
+                                                  | None -> List.empty
+                                                  | Some(jsonVal) -> jsonVal.AsArray() |> List.ofArray
 
-        let builder =
+                                              @@>
+                                      | _ -> failwithf "Unsupported type %O" propType
+                                  | JsonObjectType.Object ->
+                                      fun args -> <@@ (%%args[0]: JsonValue).TryGetProperty(name) @@>
+                                  | _ -> failwithf "Unsupported type %O" propType
+                      )
+
+                  ty.AddMember(property)
+
+                  yield
+                      if isRequired then
+                          (ProvidedParameter(name, returnType, false), propType, isRequired)
+                      else
+                          let returnTypeWithoutOption = returnType.GenericTypeArguments[0]
+                          (ProvidedParameter(name, returnTypeWithoutOption, false, null), propType, isRequired) ]
+
+        let create =
+            let processArgs
+                (args: Quotations.Expr list) =
+                    [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
+                          let name = parameter.Name
+
+                          yield
+                              (match (propType, isRequired) with
+                               | (JsonObjectType.String, true) ->
+                                   <@@ [| (name, JsonValue.String(%%arg: string)) |] @@>
+                               | (JsonObjectType.String, false) ->
+                                   <@@
+                                       match %%arg: string with
+                                       | null -> [||]
+                                       | value -> [| (name, JsonValue.String(value)) |]
+                                   @@>
+                               | _ -> <@@ [||] @@>) ]
+
             ProvidedMethod(
                 methodName = "Create",
-                parameters = parametersForProperties,
+                parameters = (parametersForCreate |> List.map (fun (p, _, _) -> p)),
                 returnType = ty,
                 isStatic = true,
-                invokeCode = fun args -> <@@ JsonValue.Record([||]) @@>
+                invokeCode =
+                    fun args ->
+                        <@@
+                            JsonValue.Record(
+                                Array.concat (
+                                    (%%(Quotations.Expr.NewArray(typeof<(string * JsonValue)[]>, processArgs args)))
+                                    : (string * JsonValue)[][]
+                                )
+                            )
+                        @@>
             )
 
-        ty.AddMember(builder)
+        ty.AddMember(create)
         ty
 
     do
@@ -277,7 +316,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schema.Type <> JsonObjectType.Object then
                             failwith "Only object supported"
 
-                        generatePropertiesAndBuilderForObject ty schema.Properties schema.RequiredProperties
+                        generatePropertiesAndCreateForObject ty schema.Properties schema.RequiredProperties
                         |> ignore
 
                         let parse =
