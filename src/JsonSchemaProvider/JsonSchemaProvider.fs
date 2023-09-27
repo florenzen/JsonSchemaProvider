@@ -21,8 +21,9 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     let rec determineReturnType
         (name: string)
         (item: JsonSchema)
-        (properties: IDictionary<string, JsonSchemaProperty>)
-        (requiredProperties: ICollection<string>)
+        (schema: JsonSchema)
+        // (properties: IDictionary<string, JsonSchemaProperty>)
+        // (requiredProperties: ICollection<string>)
         (ty: ProvidedTypeDefinition)
         (isRequired: bool)
         (propType: JsonObjectType)
@@ -33,8 +34,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         | JsonObjectType.Integer -> if isRequired then typeof<int> else typeof<int option>
         | JsonObjectType.Number -> if isRequired then typeof<float> else typeof<float option>
         | JsonObjectType.Array ->
-            let elementTy =
-                determineReturnType name item.Item item.Properties item.RequiredProperties ty true item.Type
+            let elementTy = determineReturnType name item.Item item ty true item.Type
 
             let list = typedefof<list<_>>
             list.MakeGenericType(elementTy)
@@ -42,7 +42,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name, baseType = Some baseTy)
 
-            generatePropertiesAndCreateForObject innerTy properties requiredProperties
+            generatePropertiesAndCreateForObject innerTy schema //properties requiredProperties
             |> ignore
 
             ty.AddMember(innerTy)
@@ -56,9 +56,13 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
     and generatePropertiesAndCreateForObject
         (ty: ProvidedTypeDefinition)
-        (properties: IDictionary<string, JsonSchemaProperty>)
-        (requiredProperties: ICollection<string>)
+        (schema: JsonSchema)
+        // (properties: IDictionary<string, JsonSchemaProperty>)
+        // (requiredProperties: ICollection<string>)
         =
+        let properties = schema.Properties
+        let requiredProperties = schema.RequiredProperties
+
         let parametersForCreate =
             [ for prop in properties do
                   let name = prop.Key
@@ -69,8 +73,9 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                       determineReturnType
                           name
                           prop.Value.Item
-                          prop.Value.Properties
-                          prop.Value.RequiredProperties
+                          prop.Value
+                          // prop.Value.Properties
+                          // prop.Value.RequiredProperties
                           ty
                           isRequired
                           propType
@@ -279,7 +284,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                            | (JsonObjectType.String, false) ->
                                <@@
                                    match %%arg: string with
-                                   | null -> [||]   
+                                   | null -> [||]
                                    | value -> [| (name, JsonValue.String(value)) |]
                                @@>
                            | (JsonObjectType.Integer, true) ->
@@ -301,12 +306,15 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 invokeCode =
                     fun args ->
                         <@@
-                            JsonValue.Record(
-                                Array.concat (
-                                    (%%(Quotations.Expr.NewArray(typeof<(string * JsonValue)[]>, processArgs args)))
-                                    : (string * JsonValue)[][]
+                            let record =
+                                JsonValue.Record(
+                                    Array.concat (
+                                        (%%(Quotations.Expr.NewArray(typeof<(string * JsonValue)[]>, processArgs args)))
+                                        : (string * JsonValue)[][]
+                                    )
                                 )
-                            )
+                            record
+                            // schema
                         @@>
             )
 
@@ -331,7 +339,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schema.Type <> JsonObjectType.Object then
                             failwith "Only object supported"
 
-                        generatePropertiesAndCreateForObject ty schema.Properties schema.RequiredProperties
+                        generatePropertiesAndCreateForObject ty schema //schema.Properties schema.RequiredProperties
                         |> ignore
 
                         let parse =
