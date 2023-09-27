@@ -7,6 +7,7 @@ open ProviderImplementation.ProvidedTypes
 open NJsonSchema
 open FSharp.Data
 
+
 [<TypeProvider>]
 type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     inherit TypeProviderForNamespaces(config)
@@ -28,6 +29,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         (isRequired: bool)
         (propType: JsonObjectType)
         =
+        printfn "DET RET TYPE FOR %s %O" name schema
+
         match propType with
         | JsonObjectType.String -> if isRequired then typeof<string> else typeof<string option>
         | JsonObjectType.Boolean -> if isRequired then typeof<bool> else typeof<bool option>
@@ -40,11 +43,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             list.MakeGenericType(elementTy)
         | JsonObjectType.Object ->
             let innerTy =
-                ProvidedTypeDefinition(thisAssembly, namespaceName, name, baseType = Some baseTy)
+                ProvidedTypeDefinition(thisAssembly, namespaceName, name + "Obj", baseType = Some baseTy)
 
             generatePropertiesAndCreateForObject innerTy schema //properties requiredProperties
             |> ignore
 
+            printf "Add %O to %O" innerTy ty
             ty.AddMember(innerTy)
 
             if isRequired then
@@ -60,6 +64,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         // (properties: IDictionary<string, JsonSchemaProperty>)
         // (requiredProperties: ICollection<string>)
         =
+        printfn "%O" (schema)
         let properties = schema.Properties
         let requiredProperties = schema.RequiredProperties
 
@@ -273,6 +278,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
                           (ProvidedParameter(name, nullableReturnType, false, defaultValue), propType, isRequired) ]
 
+        for p in parametersForCreate do
+            printfn "PARAM %O" p
+
+        printfn ""
+        printfn ""
+
         let create =
             let processArgs (args: Quotations.Expr list) =
                 [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
@@ -296,7 +307,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                    else
                                        [||]
                                @@>
-                           | _ -> <@@ [||] @@>) ]
+                           | (JsonObjectType.Object, true) -> <@@ [| (name, %%arg) |] @@>
+                           | (JsonObjectType.Object, false) ->
+                                <@@ 
+                                    match %%arg:JsonValue with | null -> [||] | value -> [|(name, value)|]
+                                @@>
+                           | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
 
             ProvidedMethod(
                 methodName = "Create",
@@ -313,8 +329,9 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                         : (string * JsonValue)[][]
                                     )
                                 )
+
                             record
-                            // schema
+                        // schema
                         @@>
             )
 

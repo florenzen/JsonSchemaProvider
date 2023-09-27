@@ -141,10 +141,16 @@ let schemaSource2 = """{
     },
     "Z": {
       "type": "integer"
+    },
+    "nested": {
+      "type": "object",
+      "properties": {
+        "nestedA": {"type": "string"},
+        "nestedB": {"type": "string"}
+      }
     }
   }
 }"""
-
 type Json2 = JsonSchemaProvider<schema=schemaSource2>
 
 let c = Json2.Create(Y="xx", X="yy")
