@@ -9,7 +9,7 @@ open FSharp.Data
 [<AllowNullLiteral>]
 type NullableJsonValue(jsonVal: JsonValue) =
     member val JsonVal = jsonVal
-    override this.ToString(): string = this.JsonVal.ToString()
+    override this.ToString() : string = this.JsonVal.ToString()
 
 [<TypeProvider>]
 type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
@@ -46,8 +46,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name + "Obj", baseType = Some baseTy)
 
-            generatePropertiesAndCreateForObject innerTy schema
-            |> ignore
+            generatePropertiesAndCreateForObject innerTy schema |> ignore
 
             printf "Add %O to %O" innerTy ty
             ty.AddMember(innerTy)
@@ -59,10 +58,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 opt.MakeGenericType(innerTy)
         | _ -> failwithf "Unsupported type %O" propType
 
-    and generatePropertiesAndCreateForObject
-        (ty: ProvidedTypeDefinition)
-        (schema: JsonSchema)
-        =
+    and generatePropertiesAndCreateForObject (ty: ProvidedTypeDefinition) (schema: JsonSchema) =
         printfn "%O" (schema)
         let properties = schema.Properties
         let requiredProperties = schema.RequiredProperties
@@ -74,13 +70,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                   let isRequired = requiredProperties.Contains(name)
 
                   let returnType =
-                      determineReturnType
-                          name
-                          prop.Value.Item
-                          prop.Value
-                          ty
-                          isRequired
-                          propType
+                      determineReturnType name prop.Value.Item prop.Value ty isRequired propType
 
                   let property =
                       ProvidedProperty(
@@ -158,14 +148,16 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                                   jsonVal.AsArray() |> List.ofArray
                                               @@>
                                       | _ -> failwithf "Unsupported type %O" propType
-                                  | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: NullableJsonValue).JsonVal[name] @@>
+                                  | JsonObjectType.Object ->
+                                      fun args -> <@@ (%%args[0]: NullableJsonValue).JsonVal[name] @@>
                                   | _ -> failwithf "Unsupported type %O" propType
                               else
                                   match propType with
                                   | JsonObjectType.String ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                              let maybeJsonVal =
+                                                  (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                               maybeJsonVal
                                               |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsString())
@@ -173,7 +165,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.Boolean ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                              let maybeJsonVal =
+                                                  (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                               maybeJsonVal
                                               |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsBoolean())
@@ -181,7 +174,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.Integer ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                              let maybeJsonVal =
+                                                  (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                               maybeJsonVal
                                               |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsInteger())
@@ -189,7 +183,9 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.Number ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                              let maybeJsonVal =
+                                                  (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+
                                               maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsFloat())
                                           @@>
                                   | JsonObjectType.Array ->
@@ -197,7 +193,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.String ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                                  let maybeJsonVal =
+                                                      (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -209,7 +206,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Boolean ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                                  let maybeJsonVal =
+                                                      (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -221,7 +219,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Integer ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                                  let maybeJsonVal =
+                                                      (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -233,7 +232,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Number ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                                  let maybeJsonVal =
+                                                      (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -245,7 +245,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Object ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
+                                                  let maybeJsonVal =
+                                                      (%%args[0]: NullableJsonValue).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -280,7 +281,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
         printfn ""
         printfn ""
-        
+
         let create =
             let processArgs (args: Quotations.Expr list) =
                 [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
@@ -306,9 +307,11 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                @@>
                            | (JsonObjectType.Object, true) -> <@@ [| (name, %%arg) |] @@>
                            | (JsonObjectType.Object, false) ->
-                                <@@ 
-                                    match %%arg:NullableJsonValue with | null -> [||] | jVal -> [|(name, jVal.JsonVal)|]
-                                @@>
+                               <@@
+                                   match %%arg: NullableJsonValue with
+                                   | null -> [||]
+                                   | jVal -> [| (name, jVal.JsonVal) |]
+                               @@>
                            | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
 
             ProvidedMethod(
@@ -320,15 +323,23 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     fun args ->
                         let schemaSource = schema.ToJson()
                         printfn "SCHEMA SOURCE %s" schemaSource
+
                         <@@
                             let record =
-                                NullableJsonValue(JsonValue.Record(
-                                    Array.concat (
-                                        (%%(Quotations.Expr.NewArray(typeof<(string * JsonValue)[]>, processArgs args)))
-                                        : (string * JsonValue)[][]
+                                NullableJsonValue(
+                                    JsonValue.Record(
+                                        Array.concat (
+                                            (%%(Quotations.Expr.NewArray(
+                                                typeof<(string * JsonValue)[]>,
+                                                processArgs args
+                                            )))
+                                            : (string * JsonValue)[][]
+                                        )
                                     )
-                                ))
+                                )
+
                             let recordSource = record.ToString()
+
                             let schema =
                                 JsonSchema.FromJsonAsync(schemaSource)
                                 |> Async.AwaitTask
@@ -339,7 +350,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                             if Seq.isEmpty validationErrors then
                                 record
                             else
-                                let message = validationErrors |> Seq.map (fun validationError -> validationError.ToString()) |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+                                let message =
+                                    validationErrors
+                                    |> Seq.map (fun validationError -> validationError.ToString())
+                                    |> fun msgs ->
+                                        System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+
                                 raise (System.ArgumentException(message, recordSource))
                         @@>
             )
@@ -365,8 +381,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schema.Type <> JsonObjectType.Object then
                             failwith "Only object supported"
 
-                        generatePropertiesAndCreateForObject ty schema
-                        |> ignore
+                        generatePropertiesAndCreateForObject ty schema |> ignore
 
                         let parse =
                             ProvidedMethod(
@@ -387,7 +402,13 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                             if Seq.isEmpty validationErrors then
                                                 NullableJsonValue(JsonValue.Parse(%%args[0]))
                                             else
-                                                let message = validationErrors |> Seq.map (fun validationError -> validationError.ToString()) |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+                                                let message =
+                                                    validationErrors
+                                                    |> Seq.map (fun validationError -> validationError.ToString())
+                                                    |> fun msgs ->
+                                                        System.String.Join(", ", msgs)
+                                                        |> sprintf "JSON Schema validation failed: %s"
+
                                                 raise (System.ArgumentException(message, ((%%args[0]): string)))
                                         @@>
                             )
