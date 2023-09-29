@@ -7,6 +7,10 @@ open ProviderImplementation.ProvidedTypes
 open NJsonSchema
 open FSharp.Data
 
+[<AllowNullLiteral>]
+type JVal(jsonVal: JsonValue) =
+    member val JsonVal = jsonVal
+    override this.ToString(): string = this.JsonVal.ToString()
 
 [<TypeProvider>]
 type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
@@ -14,7 +18,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     let namespaceName = "JsonSchemaProvider"
     let thisAssembly = Assembly.GetExecutingAssembly()
     let staticParams = [ ProvidedStaticParameter("schema", typeof<string>) ]
-    let baseTy = typeof<JsonValue>
+    let baseTy = typeof<JVal>
 
     let jsonSchemaTy =
         ProvidedTypeDefinition(thisAssembly, namespaceName, "JsonSchemaProvider", baseType = Some baseTy)
@@ -95,25 +99,25 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.String ->
                                       fun args ->
                                           <@@
-                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              let jsonVal = (%%args[0]: JVal).JsonVal[name]
                                               jsonVal.AsString()
                                           @@>
                                   | JsonObjectType.Boolean ->
                                       fun args ->
                                           <@@
-                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              let jsonVal = (%%args[0]: JVal).JsonVal[name]
                                               jsonVal.AsBoolean()
                                           @@>
                                   | JsonObjectType.Integer ->
                                       fun args ->
                                           <@@
-                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              let jsonVal = (%%args[0]: JVal).JsonVal[name]
                                               jsonVal.AsInteger()
                                           @@>
                                   | JsonObjectType.Number ->
                                       fun args ->
                                           <@@
-                                              let jsonVal = (%%args[0]: JsonValue)[name]
+                                              let jsonVal = (%%args[0]: JVal).JsonVal[name]
                                               jsonVal.AsFloat()
                                           @@>
                                   | JsonObjectType.Array ->
@@ -121,7 +125,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.String ->
                                           fun args ->
                                               <@@
-                                                  let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  let jsonVal = (%%args[0]: JVal).JsonVal[name]
 
                                                   jsonVal.AsArray()
                                                   |> List.ofArray
@@ -130,7 +134,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Boolean ->
                                           fun args ->
                                               <@@
-                                                  let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  let jsonVal = (%%args[0]: JVal).JsonVal[name]
 
                                                   jsonVal.AsArray()
                                                   |> List.ofArray
@@ -139,7 +143,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Integer ->
                                           fun args ->
                                               <@@
-                                                  let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  let jsonVal = (%%args[0]: JVal).JsonVal[name]
 
                                                   jsonVal.AsArray()
                                                   |> List.ofArray
@@ -148,7 +152,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Number ->
                                           fun args ->
                                               <@@
-                                                  let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  let jsonVal = (%%args[0]: JVal).JsonVal[name]
 
                                                   jsonVal.AsArray()
                                                   |> List.ofArray
@@ -157,18 +161,18 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Object ->
                                           fun args ->
                                               <@@
-                                                  let jsonVal = (%%args[0]: JsonValue)[name]
+                                                  let jsonVal = (%%args[0]: JVal).JsonVal[name]
                                                   jsonVal.AsArray() |> List.ofArray
                                               @@>
                                       | _ -> failwithf "Unsupported type %O" propType
-                                  | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: JsonValue)[name] @@>
+                                  | JsonObjectType.Object -> fun args -> <@@ (%%args[0]: JVal).JsonVal[name] @@>
                                   | _ -> failwithf "Unsupported type %O" propType
                               else
                                   match propType with
                                   | JsonObjectType.String ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                               maybeJsonVal
                                               |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsString())
@@ -176,7 +180,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.Boolean ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                               maybeJsonVal
                                               |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsBoolean())
@@ -184,7 +188,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.Integer ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                               maybeJsonVal
                                               |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsInteger())
@@ -192,7 +196,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                   | JsonObjectType.Number ->
                                       fun args ->
                                           <@@
-                                              let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                              let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
                                               maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsFloat())
                                           @@>
                                   | JsonObjectType.Array ->
@@ -200,7 +204,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.String ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -212,7 +216,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Boolean ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -224,7 +228,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Integer ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -236,7 +240,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Number ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -248,7 +252,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                       | JsonObjectType.Object ->
                                           fun args ->
                                               <@@
-                                                  let maybeJsonVal = (%%args[0]: JsonValue).TryGetProperty(name)
+                                                  let maybeJsonVal = (%%args[0]: JVal).JsonVal.TryGetProperty(name)
 
                                                   match maybeJsonVal with
                                                   | None -> List.empty
@@ -257,7 +261,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                               @@>
                                       | _ -> failwithf "Unsupported type %O" propType
                                   | JsonObjectType.Object ->
-                                      fun args -> <@@ (%%args[0]: JsonValue).TryGetProperty(name) @@>
+                                      fun args -> <@@ (%%args[0]: JVal).JsonVal.TryGetProperty(name) @@>
                                   | _ -> failwithf "Unsupported type %O" propType
                       )
 
@@ -283,7 +287,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
         printfn ""
         printfn ""
-
+        
         let create =
             let processArgs (args: Quotations.Expr list) =
                 [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
@@ -310,7 +314,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                            | (JsonObjectType.Object, true) -> <@@ [| (name, %%arg) |] @@>
                            | (JsonObjectType.Object, false) ->
                                 <@@ 
-                                    match %%arg:JsonValue with | null -> [||] | value -> [|(name, value)|]
+                                    match %%arg:JVal with | null -> [||] | jVal -> [|(name, jVal.JsonVal)|]
                                 @@>
                            | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
 
@@ -323,12 +327,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     fun args ->
                         <@@
                             let record =
-                                JsonValue.Record(
+                                JVal(JsonValue.Record(
                                     Array.concat (
                                         (%%(Quotations.Expr.NewArray(typeof<(string * JsonValue)[]>, processArgs args)))
                                         : (string * JsonValue)[][]
                                     )
-                                )
+                                ))
 
                             record
                         // schema
@@ -376,7 +380,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                             let result = schema.Validate((%%args[0]): string)
 
                                             if Seq.isEmpty result then
-                                                JsonValue.Parse(%%args[0])
+                                                JVal(JsonValue.Parse(%%args[0]))
                                             else
                                                 failwith "Invalid JSON"
                                         @@>
