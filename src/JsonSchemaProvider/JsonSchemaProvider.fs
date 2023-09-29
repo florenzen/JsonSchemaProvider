@@ -318,6 +318,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 isStatic = true,
                 invokeCode =
                     fun args ->
+                        let schemaSource = schema.ToJson()
+                        printfn "SCHEMA SOURCE %s" schemaSource
                         <@@
                             let record =
                                 NullableJsonValue(JsonValue.Record(
@@ -326,9 +328,17 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                         : (string * JsonValue)[][]
                                     )
                                 ))
+                            let schema =
+                                JsonSchema.FromJsonAsync(schemaSource)
+                                |> Async.AwaitTask
+                                |> Async.RunSynchronously
 
-                            record
-                        // schema
+                            let result = schema.Validate(record.ToString())
+
+                            if Seq.isEmpty result then
+                                record
+                            else
+                                failwith "Invalid JSON"
                         @@>
             )
 
