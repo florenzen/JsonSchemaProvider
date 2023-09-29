@@ -328,17 +328,19 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                         : (string * JsonValue)[][]
                                     )
                                 ))
+                            let recordSource = record.ToString()
                             let schema =
                                 JsonSchema.FromJsonAsync(schemaSource)
                                 |> Async.AwaitTask
                                 |> Async.RunSynchronously
 
-                            let result = schema.Validate(record.ToString())
+                            let validationErrors = schema.Validate(recordSource)
 
-                            if Seq.isEmpty result then
+                            if Seq.isEmpty validationErrors then
                                 record
                             else
-                                failwith "Invalid JSON"
+                                let message = validationErrors |> Seq.map (fun validationError -> validationError.ToString()) |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+                                raise (System.ArgumentException(message, recordSource))
                         @@>
             )
 
@@ -380,12 +382,13 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                                 |> Async.AwaitTask
                                                 |> Async.RunSynchronously
 
-                                            let result = schema.Validate((%%args[0]): string)
+                                            let validationErrors = schema.Validate((%%args[0]): string)
 
-                                            if Seq.isEmpty result then
+                                            if Seq.isEmpty validationErrors then
                                                 NullableJsonValue(JsonValue.Parse(%%args[0]))
                                             else
-                                                failwith "Invalid JSON"
+                                                let message = validationErrors |> Seq.map (fun validationError -> validationError.ToString()) |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+                                                raise (System.ArgumentException(message, ((%%args[0]): string)))
                                         @@>
                             )
 
@@ -408,3 +411,6 @@ do ()
 // TODO
 // - automatic tests
 // - builder functions
+// - Separate into DesignTime and RunTime assembly and make quotations smaller by referencing stuff
+//   from RT assembly (may also avoid the need to reparse the schema in the Create methods) by caching
+//   it.
