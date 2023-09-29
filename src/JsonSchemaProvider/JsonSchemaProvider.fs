@@ -26,8 +26,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         (name: string)
         (item: JsonSchema)
         (schema: JsonSchema)
-        // (properties: IDictionary<string, JsonSchemaProperty>)
-        // (requiredProperties: ICollection<string>)
         (ty: ProvidedTypeDefinition)
         (isRequired: bool)
         (propType: JsonObjectType)
@@ -48,7 +46,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name + "Obj", baseType = Some baseTy)
 
-            generatePropertiesAndCreateForObject innerTy schema //properties requiredProperties
+            generatePropertiesAndCreateForObject innerTy schema
             |> ignore
 
             printf "Add %O to %O" innerTy ty
@@ -64,8 +62,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     and generatePropertiesAndCreateForObject
         (ty: ProvidedTypeDefinition)
         (schema: JsonSchema)
-        // (properties: IDictionary<string, JsonSchemaProperty>)
-        // (requiredProperties: ICollection<string>)
         =
         printfn "%O" (schema)
         let properties = schema.Properties
@@ -82,8 +78,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                           name
                           prop.Value.Item
                           prop.Value
-                          // prop.Value.Properties
-                          // prop.Value.RequiredProperties
                           ty
                           isRequired
                           propType
@@ -359,7 +353,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schema.Type <> JsonObjectType.Object then
                             failwith "Only object supported"
 
-                        generatePropertiesAndCreateForObject ty schema //schema.Properties schema.RequiredProperties
+                        generatePropertiesAndCreateForObject ty schema
                         |> ignore
 
                         let parse =
