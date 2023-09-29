@@ -431,7 +431,9 @@ do ()
 //
 // TODO
 // - automatic tests
-// - builder functions
+// - DONE builder functions
 // - Separate into DesignTime and RunTime assembly and make quotations smaller by referencing stuff
 //   from RT assembly (may also avoid the need to reparse the schema in the Create methods) by caching
 //   it.
+// - Fake build script
+// - Read schema from file
