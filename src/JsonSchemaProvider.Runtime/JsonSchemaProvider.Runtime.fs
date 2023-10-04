@@ -1,7 +1,6 @@
 ﻿namespace JsonSchemaProvider
 
 open FSharp.Data
-open FSharp.Core.CompilerServices
 
 [<AllowNullLiteral>]
 type NullableJsonValue(jsonVal: JsonValue) =
@@ -9,6 +8,6 @@ type NullableJsonValue(jsonVal: JsonValue) =
     override this.ToString() : string = this.JsonVal.ToString()
 
 #if !IS_DESIGNTIME
-[<assembly:TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
+[<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
 do ()
 #endif
