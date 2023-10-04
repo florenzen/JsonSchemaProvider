@@ -9,7 +9,7 @@ open JsonSchemaProvider
 
 [<TypeProvider>]
 type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
-    inherit TypeProviderForNamespaces (config, assemblyReplacementMap=[("JsonSchemaProvider.DesignTime", "JsonSchemaProvider")], addDefaultProbingLocation=true)
+    inherit TypeProviderForNamespaces (config, assemblyReplacementMap=[("JsonSchemaProvider.DesignTime", "JsonSchemaProvider.Runtime")], addDefaultProbingLocation=true)
     
     let namespaceName = "JsonSchemaProvider"
     let thisAssembly = Assembly.GetExecutingAssembly()

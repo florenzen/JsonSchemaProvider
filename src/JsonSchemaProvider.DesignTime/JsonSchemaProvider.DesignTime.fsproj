@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\JsonSchemaProvider\JsonSchemaProvider.fs" />
+    <Compile Include="..\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fs" />
     <Compile Include="JsonSchemaProvider.DesignTime.fs" />
   </ItemGroup>
 
