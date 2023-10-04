@@ -369,7 +369,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     | [| :? string as schemaSource; :? string as schemaFile |] ->
                         if schemaSource = "" && schemaFile = "" || schemaSource <> "" && schemaFile <> "" then
                             failwith "Only one of schema or schemaFile must be set."
- 
+
                         let schema =
                             if schemaSource <> "" then
                                 JsonSchema.FromJsonAsync(schemaSource)
