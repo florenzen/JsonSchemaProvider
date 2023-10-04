@@ -12,10 +12,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@4.1.0
+      uses: actions/checkout@v4.1.0
 
     - name: Setup .NET 7
-      uses: actions/setup-dotnet@3.2.0
+      uses: actions/setup-dotnet@v3.2.0
       with:
         dotnet-nersion: 7.0.x
 
