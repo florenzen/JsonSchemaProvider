@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@4.1.0
+
+    - name: Setup .NET 7
+      uses: actions/setup-dotnet@3.2.0
+      with:
+        dotnet-nersion: 7.0.x
+
+    - name: Restore tools
+      run: dotnet tool restore
+
+    - name: Build
+      run: dotnet build tests/JsonSchemaProvider.Tests
+
+    - name: Run tests
+      run: dotnet run --project tests/JsonSchemaProvider.Tests
