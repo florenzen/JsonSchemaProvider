@@ -8,6 +8,12 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>JsonSchemaProvider</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Florian Lorenzen</Authors>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="JsonSchemaProvider.Runtime.fs" />
   </ItemGroup>
