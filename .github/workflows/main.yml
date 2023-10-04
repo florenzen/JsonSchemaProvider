@@ -17,7 +17,7 @@ jobs:
     - name: Setup .NET 7
       uses: actions/setup-dotnet@v3.2.0
       with:
-        dotnet-nersion: 7.0.x
+        dotnet-version: 7.0.x
 
     - name: Restore tools
       run: dotnet tool restore
