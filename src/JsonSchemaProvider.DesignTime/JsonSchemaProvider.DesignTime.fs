@@ -32,8 +32,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         (isRequired: bool)
         (propType: JsonObjectType)
         =
-        printfn "DET RET TYPE FOR %s %O" name schema
-
         match propType with
         | JsonObjectType.String -> if isRequired then typeof<string> else typeof<string option>
         | JsonObjectType.Boolean -> if isRequired then typeof<bool> else typeof<bool option>
@@ -61,7 +59,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         | _ -> failwithf "Unsupported type %O" propType
 
     and generatePropertiesAndCreateForObject (ty: ProvidedTypeDefinition) (schema: JsonSchema) =
-        printfn "%O" (schema)
         let properties = schema.Properties
         let requiredProperties = schema.RequiredProperties
 
@@ -278,12 +275,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
                           (ProvidedParameter(name, nullableReturnType, false, defaultValue), propType, isRequired) ]
 
-        for p in parametersForCreate do
-            printfn "PARAM %O" p
-
-        printfn ""
-        printfn ""
-
         let create =
             let processArgs (args: Quotations.Expr list) =
                 [ for (arg, (parameter, propType, isRequired)) in List.zip args parametersForCreate do
@@ -324,7 +315,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 invokeCode =
                     fun args ->
                         let schemaSource = schema.ToJson()
-                        printfn "SCHEMA SOURCE %s" schemaSource
 
                         <@@
                             let record =
