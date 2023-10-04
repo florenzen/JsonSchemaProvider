@@ -444,4 +444,5 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 //   from RT assembly (may also avoid the need to reparse the schema in the Create methods) by caching
 //   it.
 // - Fake build script
-// - TODO Read schema from file
+// - DONE Read schema from file
+// - Build NuGet package
