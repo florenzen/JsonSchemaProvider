@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\JsonSchemaProvider\JsonSchemaProvider.fsproj" />
+    <ProjectReference Include="..\..\src\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
