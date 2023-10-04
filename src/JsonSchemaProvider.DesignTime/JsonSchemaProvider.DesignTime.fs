@@ -1,4 +1,4 @@
-﻿// Copyright © 2023 Florian Lorenzen
+﻿// Copyright (c) 2023 Florian Lorenzen
 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -455,17 +455,3 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         )
 
     do this.AddNamespace(namespaceName, [ jsonSchemaTy ])
-
-// https://medium.com/@haumohio/the-trips-and-traps-of-creating-a-generative-type-provider-in-f-75162d99622c
-// http://blog.mavnn.co.uk/type-providers-from-the-ground-up/
-// https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/383
-//
-// TODO
-// - DONE automatic tests
-// - DONE builder functions
-// - DONE Separate into DesignTime and RunTime assembly and make quotations smaller by referencing stuff
-//   from RT assembly (may also avoid the need to reparse the schema in the Create methods) by caching
-//   it.
-// - Fake build script
-// - DONE Read schema from file
-// - Build NuGet package
