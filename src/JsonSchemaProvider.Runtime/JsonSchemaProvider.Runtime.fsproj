@@ -4,17 +4,17 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <FSharpToolsDirectory>typeproviders</FSharpToolsDirectory>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <NoWarn>NU5100</NoWarn>
-    <!-- NU5100 is irrelevant since the respective DLLs must be in the typeproviders
-         directory. -->
-    <!-- NU5188 should be avoidable, but it is also mentioned here:
-         https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/387#issuecomment-1224162538 -->
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>JsonSchemaProvider</PackageId>
     <Version>0.1.0</Version>
     <Authors>Florian Lorenzen</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <NoWarn>NU5100</NoWarn>
+    <!-- NU5100 is irrelevant since the respective DLLs must be in the typeproviders
+         directory. -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,12 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JsonSchemaProvider.DesignTime\JsonSchemaProvider.DesignTime.fsproj">
       <IsFSharpDesignTimeProvider>true</IsFSharpDesignTimeProvider>
       <PrivateAssets>all</PrivateAssets>
-      <NoWarn>NU5188</NoWarn>
-      <!-- NU5188 should be avoidable, but it is also mentioned here:
-           https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/387#issuecomment-1224162538 -->
     </ProjectReference>
     <PackageReference Include="FSharp.Data" Version="6.3.0" />
     <PackageReference Include="NJsonSchema" Version="10.9.0" />
