@@ -1,5 +1,6 @@
-namespace JsonSchemaProvider.DesignTime
+﻿namespace JsonSchemaProvider.DesignTime
 
+open System.IO
 open System.Reflection
 open FSharp.Core.CompilerServices
 open ProviderImplementation.ProvidedTypes
@@ -18,7 +19,11 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
     let namespaceName = "JsonSchemaProvider"
     let thisAssembly = Assembly.GetExecutingAssembly()
-    let staticParams = [ ProvidedStaticParameter("schema", typeof<string>) ]
+
+    let staticParams =
+        [ ProvidedStaticParameter("schema", typeof<string>, "")
+          ProvidedStaticParameter("schemaFile", typeof<string>, "") ]
+
     let baseTy = typeof<NullableJsonValue>
 
     let jsonSchemaTy =
@@ -361,11 +366,20 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             instantiationFunction =
                 fun typeName parameterValues ->
                     match parameterValues with
-                    | [| :? string as schemaSource |] ->
+                    | [| :? string as schemaSource; :? string as schemaFile |] ->
+                        if schemaSource = "" && schemaFile = "" || schemaSource <> "" && schemaFile <> "" then
+                            failwith "Only one of schema or schemaFile must be set."
+ 
                         let schema =
-                            JsonSchema.FromJsonAsync(schemaSource)
-                            |> Async.AwaitTask
-                            |> Async.RunSynchronously
+                            if schemaSource <> "" then
+                                JsonSchema.FromJsonAsync(schemaSource)
+                                |> Async.AwaitTask
+                                |> Async.RunSynchronously
+                            else
+                                File.ReadAllText(schemaFile)
+                                |> JsonSchema.FromJsonAsync
+                                |> Async.AwaitTask
+                                |> Async.RunSynchronously
 
                         let ty =
                             ProvidedTypeDefinition(thisAssembly, namespaceName, typeName, baseType = Some baseTy)
@@ -385,9 +399,15 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                     fun args ->
                                         <@@
                                             let schema =
-                                                JsonSchema.FromJsonAsync(schemaSource)
-                                                |> Async.AwaitTask
-                                                |> Async.RunSynchronously
+                                                if schemaSource <> "" then
+                                                    JsonSchema.FromJsonAsync(schemaSource)
+                                                    |> Async.AwaitTask
+                                                    |> Async.RunSynchronously
+                                                else
+                                                    File.ReadAllText(schemaFile)
+                                                    |> JsonSchema.FromJsonAsync
+                                                    |> Async.AwaitTask
+                                                    |> Async.RunSynchronously
 
                                             let validationErrors = schema.Validate((%%args[0]): string)
 
@@ -424,4 +444,4 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 //   from RT assembly (may also avoid the need to reparse the schema in the Create methods) by caching
 //   it.
 // - Fake build script
-// - Read schema from file
+// - TODO Read schema from file

@@ -45,9 +45,12 @@ module Tests =
 }
 """
 
+    [<Literal>]
+    let flatSchemaPath = __SOURCE_DIRECTORY__  + "/FlatSchema.json"
+
     type Flat = JsonSchemaProvider<schema=flatSchema>
     type RequiredProperties = JsonSchemaProvider<schema=requiredPropertiesSchema>
-
+    type FlatFromFile = JsonSchemaProvider<schemaFile=flatSchemaPath>
     let validRecordShouldBeParsed =
         test "valid record should be parsed" {
             let flat = Flat.Parse("""{"X": "x", "Z": 1}""")
