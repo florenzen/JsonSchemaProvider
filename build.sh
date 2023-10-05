@@ -7,4 +7,4 @@ owd="$(pwd)"
 trap "cd \"$owd\"" EXIT
 
 cd "$(dirname "$0")"
-dotnet run -v:m --project ./build/build.fsproj -- -t "$@"
+dotnet run --verbosity quiet --project ./build/build.fsproj -- -t "$@"
