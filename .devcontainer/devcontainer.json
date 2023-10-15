@@ -6,7 +6,8 @@
         "vscode": {
             "extensions": [
                 "ionide.ionide-fsharp",
-                "ms-dotnettools.csharp"
+                "ms-dotnettools.csharp",
+                "github.vscode-github-actions"
             ]
         }
     }
