@@ -1,14 +1,16 @@
 {
     "name": "dotnet7.0",
     "image": "mcr.microsoft.com/devcontainers/dotnet:7.0",
-    "postStartCommand": "dotnet tool restore",
+    "postAttachCommand": "dotnet tool restore && dotnet restore",
     "customizations": {
         "vscode": {
             "extensions": [
                 "ionide.ionide-fsharp",
+                "tintoy.msbuild-project-tools",
                 "ms-dotnettools.csharp",
                 "github.vscode-github-actions"
             ]
         }
-    }
+    },
+    "waitFor": "updateContentCommand"
 }

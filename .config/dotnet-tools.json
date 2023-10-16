@@ -7,6 +7,24 @@
       "commands": [
         "fantomas"
       ]
+    },
+    "dotnet-reportgenerator-globaltool": {
+      "version": "5.1.26",
+      "commands": [
+        "reportgenerator"
+      ]
+    },
+    "fsdocs-tool": {
+      "version": "19.1.1",
+      "commands": [
+        "fsdocs"
+      ]
+    },
+    "fsharp-analyzers": {
+      "version": "0.16.0",
+      "commands": [
+        "fsharp-analyzers"
+      ]
     }
   }
 }

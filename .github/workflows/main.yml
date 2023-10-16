@@ -4,11 +4,17 @@ on:
   push:
     branches:
     - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout
@@ -19,11 +25,19 @@ jobs:
       with:
         dotnet-version: 7.0.x
 
-    - name: Restore tools
-      run: dotnet tool restore
+    - name: Build via Bash
+      if: runner.os != 'Windows'
+      run: |
+        ./build.sh
+      env:
+        CI: true
+        CONFIGURATION: ${{ matrix.configuration }}
+        ENABLE_COVERAGE: true
 
-    - name: Build
-      run: dotnet build tests/JsonSchemaProvider.Tests
-
-    - name: Run tests
-      run: dotnet run --project tests/JsonSchemaProvider.Tests
+    - name: Build via Windows
+      if: runner.os == 'Windows'
+      run: ./build.cmd
+      env:
+        CI: true
+        CONFIGURATION: ${{ matrix.configuration }}
+        ENABLE_COVERAGE: true
