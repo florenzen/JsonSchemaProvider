@@ -71,9 +71,25 @@ module Tests =
     [<Literal>]
     let flatSchemaPath = __SOURCE_DIRECTORY__ + "/FlatSchema.json"
 
+    [<Literal>]
+    let patternSchema =
+        """{
+  "$id": "https://example.com/address.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "X": {
+      "type": "string",
+      "pattern": "^[a-z]+$"
+    }
+  }
+}
+"""
+
     type Flat = JsonSchemaProvider<schema=flatSchema>
     type RequiredProperties = JsonSchemaProvider<schema=requiredPropertiesSchema>
     type FlatFromFile = JsonSchemaProvider<schemaFile=flatSchemaPath>
+    type PatternSchema = JsonSchemaProvider<schema=patternSchema>
 
     let validRecordShouldBeParsed =
         test "valid record should be parsed" {
@@ -91,8 +107,8 @@ module Tests =
             Expect.equal flat.Z (Some(1)) "flat.Z = Some(1)"
         }
 
-    let requiredPropertiesAreNotParsedIntoOption =
-        test "required properties are not parsed into Option" {
+    let requiredPropertiesShouldNotBeParsedIntoOption =
+        test "required properties should not be parsed into Option" {
             let requiredProperties =
                 RequiredProperties.Parse("""{"X": "x", "Y": "y", "Z": 1}""")
 
@@ -102,11 +118,23 @@ module Tests =
         }
 
     let createMethodFromFileSchemaShouldReturnRecord =
-        test "create method should return record without values" {
+        test "create method from file schema should return record" {
             let flat = FlatFromFile.Create()
             Expect.equal flat.X None "flat.X = None"
             Expect.equal flat.Y None "flat.Y = None"
             Expect.equal flat.Z None "flat.Z = None"
+        }
+
+    let validationErrorShouldBeDetectedByCreate =
+        test "validation error should be detected by Create" {
+            Expect.throws (fun _ -> PatternSchema.Create(X = "a1") |> ignore) "Create throws validation exception"
+        }
+
+    let validationErrorShouldBeDetectedByParse =
+        test "validation error should be detected by Parse" {
+            Expect.throws
+                (fun _ -> PatternSchema.Parse("""{"X": "a1"}""") |> ignore)
+                "Parse throws validation exception"
         }
 
     [<Tests>]
@@ -115,4 +143,7 @@ module Tests =
             "JsonSchemaProvider.Tests"
             [ validRecordShouldBeParsed
               createMethodShouldReturnRecord
-              requiredPropertiesAreNotParsedIntoOption ]
+              requiredPropertiesShouldNotBeParsedIntoOption
+              createMethodFromFileSchemaShouldReturnRecord
+              validationErrorShouldBeDetectedByCreate
+              validationErrorShouldBeDetectedByParse ]
