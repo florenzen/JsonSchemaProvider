@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0-pre.3] - 2023-10-17
 
-### Added
-- Publish package to nuget.org.
-- Basic support for JSON Schemas with objects at the outer level.
-[Unreleased]: https://github.com/florenzen/JsonSchemaProvider/compare/v0.1.0-pre.1...HEAD
-[0.1.0-pre.1]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.1
-[Unreleased]: https://github.com/florenzen/JsonSchemaProvider/compare/v0.1.0-pre.2...HEAD
-[0.1.0-pre.2]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.2
+### Fixed
+
+- Fix publishing package to nuget.org.
 
 ## [0.1.0-pre.2] - 2023-10-17
 
@@ -21,13 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Publish package to nuget.org.
 
-- Basic support for JSON Schemas with objects at the outer level.
-[Unreleased]: https://github.com/florenzen/JsonSchemaProvider/compare/v0.1.0-pre.1...HEAD
-[0.1.0-pre.1]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.1
-
 ## [0.1.0-pre.1] - 2023-10-17
-
-First release
 
 ### Added
 
