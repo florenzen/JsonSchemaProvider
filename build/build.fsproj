@@ -19,6 +19,7 @@
     <PackageReference Include="Fake.Core.Target" Version="6.0.0" />
     <PackageReference Include="Fake.DotNet.AssemblyInfoFile" Version="6.0.0" />
     <PackageReference Include="Fake.DotNet.Cli" Version="6.0.0" />
+    <PackageReference Include="Fake.DotNet.NuGet" Version="6.0.0" />
     <PackageReference Include="Fake.Tools.Git" Version="6.0.0" />
   </ItemGroup>
 

@@ -1,6 +1,7 @@
 ﻿open System
 open Fake.Core
 open Fake.DotNet
+open Fake.DotNet.NuGet
 open Fake.Tools
 open Fake.IO
 open Fake.IO.FileSystemOperators
@@ -94,8 +95,6 @@ let mutable latestEntry =
         changelog.LatestEntry
 
 let mutable changelogBackupFilename = ""
-
-let publishUrl = "https://www.nuget.org"
 
 let enableCodeCoverage = environVarAsBoolOrDefault "ENABLE_COVERAGE" true
 
@@ -453,19 +452,21 @@ let sourceLinkTest _ =
     !!distGlob
     |> Seq.iter (fun nupkg -> dotnet.sourcelink id (sprintf "test %s" nupkg))
 
-let publishToNuget _ = allPublishChecks ()
+let publishToNuget _ =
+    allPublishChecks ()
 
-// TODO w/o paket
-// Paket.push (fun c -> {
-//     c with
-//         ToolType = ToolType.CreateLocalTool()
-//         PublishUrl = publishUrl
-//         WorkingDir = "dist"
-//         ApiKey =
-//             match nugetToken with
-//             | Some s -> s
-//             | _ -> c.ApiKey // assume paket-config was set properly
-// })
+    match nugetToken with
+    | None -> failwith "missing nugetToken"
+    | _ -> ()
+
+    let setNugetPushParams (c: NuGet.NuGet.NuGetPushParams) = { c with ApiKey = nugetToken }
+
+    !!distGlob
+    |> Seq.iter (
+        DotNet.nugetPush (fun (c: DotNet.NuGetPushOptions) ->
+            { c with
+                PushParams = setNugetPushParams c.PushParams })
+    )
 
 let gitRelease _ =
     allReleaseChecks ()
