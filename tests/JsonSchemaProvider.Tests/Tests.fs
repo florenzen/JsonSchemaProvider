@@ -69,11 +69,12 @@ module Tests =
 """
 
     [<Literal>]
-    let flatSchemaPath = __SOURCE_DIRECTORY__  + "/FlatSchema.json"
+    let flatSchemaPath = __SOURCE_DIRECTORY__ + "/FlatSchema.json"
 
     type Flat = JsonSchemaProvider<schema=flatSchema>
     type RequiredProperties = JsonSchemaProvider<schema=requiredPropertiesSchema>
     type FlatFromFile = JsonSchemaProvider<schemaFile=flatSchemaPath>
+
     let validRecordShouldBeParsed =
         test "valid record should be parsed" {
             let flat = Flat.Parse("""{"X": "x", "Z": 1}""")
@@ -92,10 +93,20 @@ module Tests =
 
     let requiredPropertiesAreNotParsedIntoOption =
         test "required properties are not parsed into Option" {
-            let requiredProperties = RequiredProperties.Parse("""{"X": "x", "Y": "y", "Z": 1}""")
+            let requiredProperties =
+                RequiredProperties.Parse("""{"X": "x", "Y": "y", "Z": 1}""")
+
             Expect.equal requiredProperties.X "x" """requiredProperties.X = "x" """
             Expect.equal requiredProperties.Y "y" """requiredProperties.Y = "y" """
             Expect.equal requiredProperties.Z 1 "flat.Z = 1"
+        }
+
+    let createMethodFromFileSchemaShouldReturnRecord =
+        test "create method should return record without values" {
+            let flat = FlatFromFile.Create()
+            Expect.equal flat.X None "flat.X = None"
+            Expect.equal flat.Y None "flat.Y = None"
+            Expect.equal flat.Z None "flat.Z = None"
         }
 
     [<Tests>]
