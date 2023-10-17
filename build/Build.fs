@@ -69,7 +69,7 @@ let temp = rootDirectory </> "temp"
 //     temp
 //     </> "watch-docs"
 
-let gitOwner = "florenz"
+let gitOwner = "florenzen"
 let gitRepoName = "JsonSchemaProvider"
 
 let gitHubRepoUrl = sprintf "https://github.com/%s/%s" gitOwner gitRepoName
