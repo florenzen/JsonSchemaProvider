@@ -96,6 +96,8 @@ let mutable latestEntry =
 
 let mutable changelogBackupFilename = ""
 
+let publishUrl = "https://www.nuget.org"
+
 let enableCodeCoverage = environVarAsBoolOrDefault "ENABLE_COVERAGE" true
 
 let githubToken = Environment.environVarOrNone "GITHUB_TOKEN"
@@ -459,7 +461,10 @@ let publishToNuget _ =
     | None -> failwith "missing nugetToken"
     | _ -> ()
 
-    let setNugetPushParams (c: NuGet.NuGet.NuGetPushParams) = { c with ApiKey = nugetToken }
+    let setNugetPushParams (c: NuGet.NuGet.NuGetPushParams) =
+        { c with
+            ApiKey = nugetToken
+            Source = Some(publishUrl) }
 
     !!distGlob
     |> Seq.iter (
