@@ -8,10 +8,24 @@
 
   <PropertyGroup>
     <PackageId>JsonSchemaProvider</PackageId>
+    <Title>JsonSchemaProvider: F# type provider for JSON schema</Title>
+    <Copyright>Copyright (c) 2023 Florian Lorenzen</Copyright>
+    <Description>The JsonSchemaProvider provides F# types from JSON schemas. It can be used to build
+JSON values in a strongly typed way that conform to the schema or to parse JSON values into an F# value that
+can be queried in a stringly types way. Specifications like numeric ranges or string patterns that cannot be
+validated at compile time are checked at runtime.
+
+The JSON schema can either be given as an inline string literal or by a local file.
+
+The type provider is built around NJsonSchema for the schema parsing and validation
+and uses the JsonValue data type from FSharp.Data.</Description>
     <Version>0.1.0</Version>
     <Authors>Florian Lorenzen</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/florenzen/JsonSchemaProvider</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/florenzen/JsonSchemaProvider</RepositoryUrl>
+    <PackageTags>F#; fsharp; data; JSON; jsonschema</PackageTags>
     <NoWarn>NU5100</NoWarn>
     <!-- NU5100 is irrelevant since the respective DLLs must be in the typeproviders
          directory. -->
