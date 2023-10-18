@@ -5,19 +5,19 @@ open System.Reflection
 [<assembly: AssemblyTitleAttribute("JsonSchemaProvider.Runtime")>]
 [<assembly: AssemblyProductAttribute("JsonSchemaProvider")>]
 [<assembly: AssemblyVersionAttribute("0.1.0")>]
-[<assembly: AssemblyMetadataAttribute("ReleaseDate","2023-10-17T00:00:00.0000000+02:00")>]
+[<assembly: AssemblyMetadataAttribute("ReleaseDate","2023-10-18T00:00:00.0000000+02:00")>]
 [<assembly: AssemblyFileVersionAttribute("0.1.0")>]
 [<assembly: AssemblyInformationalVersionAttribute("0.1.0")>]
 [<assembly: AssemblyMetadataAttribute("ReleaseChannel","pre")>]
-[<assembly: AssemblyMetadataAttribute("GitHash","692f3b0be8c72545664dcede504e90e7b85e70cf")>]
+[<assembly: AssemblyMetadataAttribute("GitHash","5f83f2f105a32447aafa0bf4145e0a8f65807fb6")>]
 do ()
 
 module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyTitle = "JsonSchemaProvider.Runtime"
     let [<Literal>] AssemblyProduct = "JsonSchemaProvider"
     let [<Literal>] AssemblyVersion = "0.1.0"
-    let [<Literal>] AssemblyMetadata_ReleaseDate = "2023-10-17T00:00:00.0000000+02:00"
+    let [<Literal>] AssemblyMetadata_ReleaseDate = "2023-10-18T00:00:00.0000000+02:00"
     let [<Literal>] AssemblyFileVersion = "0.1.0"
     let [<Literal>] AssemblyInformationalVersion = "0.1.0"
     let [<Literal>] AssemblyMetadata_ReleaseChannel = "pre"
-    let [<Literal>] AssemblyMetadata_GitHash = "692f3b0be8c72545664dcede504e90e7b85e70cf"
+    let [<Literal>] AssemblyMetadata_GitHash = "5f83f2f105a32447aafa0bf4145e0a8f65807fb6"
