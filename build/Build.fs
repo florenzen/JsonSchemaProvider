@@ -540,6 +540,8 @@ let checkFormatCode ctx =
     else
         Trace.logf "Errors while formatting: %A" result.Errors
 
+let listTargets ctx =
+    Target.listAvailable ()
 
 // let cleanDocsCache _ = DocsTool.cleanDocsCache ()
 
@@ -590,6 +592,7 @@ let initTargets () =
     Target.create "CheckFormatCode" checkFormatCode
     Target.create "Release" ignore // For local
     Target.create "Publish" ignore //For CI
+    Target.create "ListTargets" listTargets
     // Target.create "CleanDocsCache" cleanDocsCache
     // Target.create "BuildDocs" buildDocs
     // Target.create "WatchDocs" watchDocs
