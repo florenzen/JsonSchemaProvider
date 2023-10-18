@@ -98,7 +98,7 @@ let mutable changelogBackupFilename = ""
 
 let publishUrl = "https://www.nuget.org"
 
-let enableCodeCoverage = environVarAsBoolOrDefault "ENABLE_COVERAGE" true
+let enableCodeCoverage = environVarAsBoolOrDefault "ENABLE_COVERAGE" false
 
 let githubToken = Environment.environVarOrNone "GITHUB_TOKEN"
 
