@@ -27,8 +27,7 @@ jobs:
 
     - name: Build via Bash
       if: runner.os != 'Windows'
-      run: |
-        ./build.sh
+      run: ./build.sh
       env:
         CI: true
         CONFIGURATION: ${{ matrix.configuration }}
