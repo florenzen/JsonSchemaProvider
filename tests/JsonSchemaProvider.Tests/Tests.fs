@@ -30,7 +30,6 @@ module Tests =
     [<Literal>]
     let flatSchema =
         """{
-  "$id": "https://example.com/address.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
@@ -50,7 +49,6 @@ module Tests =
     [<Literal>]
     let requiredPropertiesSchema =
         """{
-  "$id": "https://example.com/address.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
@@ -74,7 +72,6 @@ module Tests =
     [<Literal>]
     let patternSchema =
         """{
-  "$id": "https://example.com/address.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
