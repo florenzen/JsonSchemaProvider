@@ -10,7 +10,7 @@ index: 1
 (**
 # Usage
 
-Add the `JsonSchemaProvider` NuGet opackage to your project:
+Add the `JsonSchemaProvider` NuGet package to your project:
 
 ```bash
 dotnet add package JsonSchemaProvider
