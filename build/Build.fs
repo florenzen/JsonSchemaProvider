@@ -540,8 +540,7 @@ let checkFormatCode ctx =
     else
         Trace.logf "Errors while formatting: %A" result.Errors
 
-let listTargets ctx =
-    Target.listAvailable ()
+let listTargets ctx = Target.listAvailable ()
 
 // let cleanDocsCache _ = DocsTool.cleanDocsCache ()
 

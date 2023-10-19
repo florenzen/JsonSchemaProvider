@@ -31,6 +31,6 @@ type NullableJsonValue(jsonVal: JsonValue) =
     override this.ToString() : string = this.JsonVal.ToString()
 
 #if !IS_DESIGNTIME
-[<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
+[<assembly: FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
 do ()
 #endif

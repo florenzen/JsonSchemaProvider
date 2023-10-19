@@ -28,5 +28,4 @@ module Main =
     open Expecto
 
     [<EntryPoint>]
-    let main args =
-        runTestsWithCLIArgs [] args Tests.tests
+    let main args = runTestsWithCLIArgs [] args Tests.tests
