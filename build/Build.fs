@@ -617,6 +617,8 @@ let initTargets () =
 
     "UpdateChangelog" ==> "GenerateAssemblyInfo" ==> "GitRelease" ==>! "Release"
 
+    "FormatCode" =?> ("DotnetBuild", not isCI.Value) |> ignore
+
     "DotnetRestore" =?> ("CheckFormatCode", isCI.Value)
     ==> "DotnetBuild"
     ==> "DotnetTest"
