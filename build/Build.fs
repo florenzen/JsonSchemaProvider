@@ -55,20 +55,13 @@ let coverageThresholdPercent = 80
 
 let coverageReportDir = rootDirectory </> "docs" </> "coverage"
 
+let docsDir = rootDirectory </> "docs"
 
-// let docsDir =
-//     rootDirectory
-//     </> "docs"
-
-// let docsSrcDir =
-//     rootDirectory
-//     </> "docsSrc"
+let docsSrcDir = rootDirectory </> "docsSrc"
 
 let temp = rootDirectory </> "temp"
 
-// let watchDocsDir =
-//     temp
-//     </> "watch-docs"
+let watchDocsDir = temp </> "watch-docs"
 
 let gitOwner = "florenzen"
 let gitRepoName = "JsonSchemaProvider"
@@ -182,64 +175,56 @@ module FSharpAnalyzers =
             member s.Usage = ""
 
 
-// module DocsTool =
-//     let quoted s = $"\"%s{s}\""
+module DocsTool =
+    let quoted s = $"\"%s{s}\""
 
-//     let fsDocsDotnetOptions (o: DotNet.Options) = {
-//         o with
-//             WorkingDirectory = rootDirectory
-//     }
+    let fsDocsDotnetOptions (o: DotNet.Options) =
+        { o with
+            WorkingDirectory = rootDirectory }
 
-//     let fsDocsBuildParams configuration (p: Fsdocs.BuildCommandParams) = {
-//         p with
-//             Clean = Some true
-//             Input = Some(quoted docsSrcDir)
-//             Output = Some(quoted docsDir)
-//             Eval = Some true
-//             Projects = Some(Seq.map quoted (!!srcGlob))
-//             Properties = Some($"Configuration=%s{configuration}")
-//             Parameters =
-//                 Some [
-//                     // https://fsprojects.github.io/FSharp.Formatting/content.html#Templates-and-Substitutions
-//                     "root", quoted documentationRootUrl
-//                     "fsdocs-collection-name", quoted productName
-//                     "fsdocs-repository-branch", quoted releaseBranch
-//                     "fsdocs-package-version", quoted latestEntry.NuGetVersion
-//                     "fsdocs-readme-link", quoted (READMElink.ToString())
-//                     "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString())
-//                 ]
-//             Strict = Some true
-//     }
+    let fsDocsBuildParams configuration (p: Fsdocs.BuildCommandParams) =
+        { p with
+            Clean = Some true
+            Input = Some(quoted docsSrcDir)
+            Output = Some(quoted docsDir)
+            Eval = Some true
+            Projects = Some(Seq.map quoted (!!srcGlob))
+            Properties = Some($"Configuration=%s{configuration}")
+            Parameters =
+                Some
+                    [
+                      // https://fsprojects.github.io/FSharp.Formatting/content.html#Templates-and-Substitutions
+                      "root", quoted documentationRootUrl
+                      "fsdocs-collection-name", quoted productName
+                      "fsdocs-repository-branch", quoted releaseBranch
+                      "fsdocs-package-version", quoted latestEntry.NuGetVersion
+                      "fsdocs-readme-link", quoted (READMElink.ToString())
+                      "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString()) ]
+            Strict = Some true }
 
 
-//     let cleanDocsCache () = Fsdocs.cleanCache rootDirectory
+    let cleanDocsCache () = Fsdocs.cleanCache rootDirectory
 
-//     let build (configuration) =
-//         Fsdocs.build fsDocsDotnetOptions (fsDocsBuildParams configuration)
+    let build (configuration) =
+        Fsdocs.build fsDocsDotnetOptions (fsDocsBuildParams configuration)
 
+    let watch (configuration) =
+        let buildParams bp =
+            let bp =
+                Option.defaultValue Fsdocs.BuildCommandParams.Default bp
+                |> fsDocsBuildParams configuration
 
-//     let watch (configuration) =
-//         let buildParams bp =
-//             let bp =
-//                 Option.defaultValue Fsdocs.BuildCommandParams.Default bp
-//                 |> fsDocsBuildParams configuration
+            { bp with
+                Output = Some watchDocsDir
+                Strict = None }
 
-//             {
-//                 bp with
-//                     Output = Some watchDocsDir
-//                     Strict = None
-//             }
+        Fsdocs.watch fsDocsDotnetOptions (fun p ->
+            { p with
+                BuildCommandParams = Some(buildParams p.BuildCommandParams) })
 
-//         Fsdocs.watch
-//             fsDocsDotnetOptions
-//             (fun p -> {
-//                 p with
-//                     BuildCommandParams = Some(buildParams p.BuildCommandParams)
-//             })
-
-let allReleaseChecks () = failOnWrongBranch ()
-// Changelog.failOnEmptyChangelog latestEntry
-
+let allReleaseChecks () =
+    failOnWrongBranch ()
+    Changelog.failOnEmptyChangelog latestEntry
 
 let failOnLocalBuild () =
     if not isCI.Value then
@@ -249,8 +234,9 @@ let failOnCIBuild () =
     if isCI.Value then
         failwith "On CI. If you want to run this target, please use a local build."
 
-let allPublishChecks () = failOnLocalBuild ()
-// Changelog.failOnEmptyChangelog latestEntry
+let allPublishChecks () =
+    failOnLocalBuild ()
+    Changelog.failOnEmptyChangelog latestEntry
 
 // ----------------------------------------------------------------------------
 // Target Implementations
@@ -542,15 +528,15 @@ let checkFormatCode ctx =
 
 let listTargets ctx = Target.listAvailable ()
 
-// let cleanDocsCache _ = DocsTool.cleanDocsCache ()
+let cleanDocsCache _ = DocsTool.cleanDocsCache ()
 
-// let buildDocs ctx =
-//     let configuration = configuration (ctx.Context.AllExecutingTargets)
-//     DocsTool.build (string configuration)
+let buildDocs ctx =
+    let configuration = configuration (ctx.Context.AllExecutingTargets)
+    DocsTool.build (string configuration)
 
-// let watchDocs ctx =
-//     let configuration = configuration (ctx.Context.AllExecutingTargets)
-//     DocsTool.watch (string configuration)
+let watchDocs ctx =
+    let configuration = configuration (ctx.Context.AllExecutingTargets)
+    DocsTool.watch (string configuration)
 
 
 let initTargets () =
@@ -561,6 +547,7 @@ let initTargets () =
 
     /// Defines a soft dependency. x must run before y, if it is present, but y does not require x to be run. Finishes the chain.
     let (?=>!) x y = x ?=> y |> ignore
+
     // ----------------------------------------------------------------------------
     // Hide Secrets in Logger
     // ----------------------------------------------------------------------------
@@ -592,14 +579,13 @@ let initTargets () =
     Target.create "Release" ignore // For local
     Target.create "Publish" ignore //For CI
     Target.create "ListTargets" listTargets
-    // Target.create "CleanDocsCache" cleanDocsCache
-    // Target.create "BuildDocs" buildDocs
-    // Target.create "WatchDocs" watchDocs
+    Target.create "CleanDocsCache" cleanDocsCache
+    Target.create "BuildDocs" buildDocs
+    Target.create "WatchDocs" watchDocs
 
     // ----------------------------------------------------------------------------
     // Target Dependencies
     // ----------------------------------------------------------------------------
-
 
     // Only call Clean if DotnetPack was in the call chain
     // Ensure Clean is called before DotnetRestore
@@ -618,23 +604,18 @@ let initTargets () =
 
     "UpdateChangelog" ?=>! "GenerateAssemblyInfo"
 
-    // "CleanDocsCache"
-    // ==>! "BuildDocs"
+    "CleanDocsCache" ==>! "BuildDocs"
 
-    // "DotnetBuild"
-    // ?=>! "BuildDocs"
+    "DotnetBuild" ?=>! "BuildDocs"
 
-    // "DotnetBuild"
-    // ==>! "BuildDocs"
+    "DotnetBuild" ==>! "BuildDocs"
 
 
-    // "DotnetBuild"
-    // ==>! "WatchDocs"
+    "DotnetBuild" ==>! "WatchDocs"
 
     "DotnetTest" ==> "GenerateCoverageReport" ==>! "ShowCoverageReport"
 
     "UpdateChangelog" ==> "GenerateAssemblyInfo" ==> "GitRelease" ==>! "Release"
-
 
     "DotnetRestore" =?> ("CheckFormatCode", isCI.Value)
     ==> "DotnetBuild"
