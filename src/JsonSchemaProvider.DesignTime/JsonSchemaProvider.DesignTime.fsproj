@@ -19,6 +19,10 @@
     </PackageReference>
     <PackageReference Include="NJsonSchema" Version="10.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Update="FSharp.Core" Version="7.0.400">
+      <!-- This excludes FSharp.Core.xml and FSharp.Core.resources.dll while referencing the right FSharp.Core.dll version -->
+      <ExcludeAssets>runtime;contentFiles</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
