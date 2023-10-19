@@ -66,16 +66,18 @@ let watchDocsDir = temp </> "watch-docs"
 let gitOwner = "florenzen"
 let gitRepoName = "JsonSchemaProvider"
 
-let gitHubRepoUrl = sprintf "https://github.com/%s/%s" gitOwner gitRepoName
+let gitHubRepoUrl = sprintf "https://github.com/%s/%s/" gitOwner gitRepoName
 
 let documentationRootUrl = sprintf "https://%s.github.io/%s/" gitOwner gitRepoName
 
 let releaseBranch = "main"
 let readme = "README.md"
 let changelogFile = "CHANGELOG.md"
+let licenseFile = "LICENSE"
 
 let READMElink = Uri(Uri(gitHubRepoUrl), $"blob/{releaseBranch}/{readme}")
 let CHANGELOGlink = Uri(Uri(gitHubRepoUrl), $"blob/{releaseBranch}/{changelogFile}")
+let LICENSElink = Uri(Uri(gitHubRepoUrl), $"blob/{releaseBranch}/{licenseFile}")
 
 let changelogPath = rootDirectory </> changelogFile
 
@@ -199,7 +201,8 @@ module DocsTool =
                       "fsdocs-repository-branch", quoted releaseBranch
                       "fsdocs-package-version", quoted latestEntry.NuGetVersion
                       "fsdocs-readme-link", quoted (READMElink.ToString())
-                      "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString()) ]
+                      "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString())
+                      "fsdocs-license-link", quoted (LICENSElink.ToString()) ]
             Strict = Some true }
 
 
