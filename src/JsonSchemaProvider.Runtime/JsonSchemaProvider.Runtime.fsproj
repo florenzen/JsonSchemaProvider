@@ -26,6 +26,8 @@ and uses the JsonValue data type from FSharp.Data.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/florenzen/JsonSchemaProvider</PackageProjectUrl>
     <RepositoryUrl>https://github.com/florenzen/JsonSchemaProvider</RepositoryUrl>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PackageReleaseNotes>https://github.com/florenzen/JsonSchemaProvider/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <PackageTags>f#; fsharp; data; json; jsonschema</PackageTags>
     <NoWarn>NU5100</NoWarn>
     <!-- NU5100 is irrelevant since the respective DLLs must be in the typeproviders
