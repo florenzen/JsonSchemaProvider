@@ -8,10 +8,56 @@ index: 1
 *)
 
 (**
-# Foo
+# Usage
+
+Add the `JsonSchemaProvider` NuGet opackage to your project:
+
+```bash
+dotnet add package JsonSchemaProvider
+```
+
+To 
 *)
 
-let x = 1
-x + 1
+(*** condition: prepare ***)
+#r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/JsonSchemaProvider.Runtime.dll"
+#r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/FSharp.Data.Json.Core.dll"
+#r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/NJsonSchema.dll"
 
+(**
+
+*)
+
+open JsonSchemaProvider
+
+[<Literal>]
+let schema =
+    """
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "X": {
+      "type": "string"
+    },
+    "Y": {
+      "type": "string"
+    },
+    "Z": {
+      "type": "integer"
+    },
+  }
+}"""
+
+type Abc = JsonSchemaProvider<schema=schema>
+
+let abc = Abc.Create(X = "x", Z = 1)
+abc
+(*** include-it ***)
+
+abc.Z
+(*** include-it ***)
+
+abc.Y
+None
 (*** include-it ***)
