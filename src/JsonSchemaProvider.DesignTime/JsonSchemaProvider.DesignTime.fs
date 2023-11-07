@@ -76,7 +76,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
             generatePropertiesAndCreateForObject innerTy schema |> ignore
 
-            printf "Add %O to %O" innerTy ty
             ty.AddMember(innerTy)
 
             if isRequired then
