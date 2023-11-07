@@ -342,6 +342,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 invokeCode =
                     fun args ->
                         let schemaSource = schema.ToJson()
+                        let schemaHashCode = schemaSource.GetHashCode()
 
                         <@@
                             let record =
@@ -359,10 +360,10 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
                             let recordSource = record.ToString()
 
-                            let schema =
-                                JsonSchema.FromJsonAsync(schemaSource)
-                                |> Async.AwaitTask
-                                |> Async.RunSynchronously
+                            let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
+                            // JsonSchema.FromJsonAsync(schemaSource)
+                            // |> Async.AwaitTask
+                            // |> Async.RunSynchronously
 
                             let validationErrors = schema.Validate(recordSource)
 
@@ -392,16 +393,14 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         if schemaSource = "" && schemaFile = "" || schemaSource <> "" && schemaFile <> "" then
                             failwith "Only one of schema or schemaFile must be set."
 
-                        let schema =
+                        let schemaString =
                             if schemaSource <> "" then
-                                JsonSchema.FromJsonAsync(schemaSource)
-                                |> Async.AwaitTask
-                                |> Async.RunSynchronously
+                                schemaSource
                             else
                                 File.ReadAllText(schemaFile)
-                                |> JsonSchema.FromJsonAsync
-                                |> Async.AwaitTask
-                                |> Async.RunSynchronously
+
+                        let schema = SchemaCache.parseSchema schemaString
+                        let schemaHashCode = schemaString.GetHashCode()
 
                         let ty =
                             ProvidedTypeDefinition(thisAssembly, namespaceName, typeName, baseType = Some baseTy)
@@ -420,16 +419,16 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                 invokeCode =
                                     fun args ->
                                         <@@
-                                            let schema =
-                                                if schemaSource <> "" then
-                                                    JsonSchema.FromJsonAsync(schemaSource)
-                                                    |> Async.AwaitTask
-                                                    |> Async.RunSynchronously
-                                                else
-                                                    File.ReadAllText(schemaFile)
-                                                    |> JsonSchema.FromJsonAsync
-                                                    |> Async.AwaitTask
-                                                    |> Async.RunSynchronously
+                                            let schema = SchemaCache.retrieveSchema schemaHashCode schemaString
+                                            // if schemaSource <> "" then
+                                            //     JsonSchema.FromJsonAsync(schemaSource)
+                                            //     |> Async.AwaitTask
+                                            //     |> Async.RunSynchronously
+                                            // else
+                                            //     File.ReadAllText(schemaFile)
+                                            //     |> JsonSchema.FromJsonAsync
+                                            //     |> Async.AwaitTask
+                                            //     |> Async.RunSynchronously
 
                                             let validationErrors = schema.Validate((%%args[0]): string)
 
