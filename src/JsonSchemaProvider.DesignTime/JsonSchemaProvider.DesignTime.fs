@@ -361,9 +361,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                             let recordSource = record.ToString()
 
                             let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
-                            // JsonSchema.FromJsonAsync(schemaSource)
-                            // |> Async.AwaitTask
-                            // |> Async.RunSynchronously
 
                             let validationErrors = schema.Validate(recordSource)
 
@@ -420,15 +417,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                     fun args ->
                                         <@@
                                             let schema = SchemaCache.retrieveSchema schemaHashCode schemaString
-                                            // if schemaSource <> "" then
-                                            //     JsonSchema.FromJsonAsync(schemaSource)
-                                            //     |> Async.AwaitTask
-                                            //     |> Async.RunSynchronously
-                                            // else
-                                            //     File.ReadAllText(schemaFile)
-                                            //     |> JsonSchema.FromJsonAsync
-                                            //     |> Async.AwaitTask
-                                            //     |> Async.RunSynchronously
 
                                             let validationErrors = schema.Validate((%%args[0]): string)
 
