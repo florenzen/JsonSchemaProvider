@@ -2,4 +2,4 @@
 title: JsonSchemaProvider
 ---
 
-[Manual](Manual/manual.fsx)
+[Manual](Manual/Manual.fsx)
