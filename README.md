@@ -10,10 +10,13 @@ validated at compile time are checked at runtime.
 
 The JSON schema can either be given as an inline string literal or by a local file.
 
-The type provider is built around [NJsonSchema](http://njsonschema.org/) for the schema parsing and validation
+The type provider is built around [NJsonSchema](https://njsonschema.org/) for the schema parsing and validation
 and uses the `JsonValue` data type from [FSharp.Data](https://fsprojects.github.io/FSharp.Data/).
 
 The version history is kept in the [changelog](CHANGELOG.md).
+
+See the [documentation](https://florenzen.github.io/JsonSchemaProvider) for instructions and
+examples how to use the type provider.
 
 ## Building
 
@@ -45,7 +48,7 @@ build.cmd
 ```
 
 The FAKE build script is based on [MiniScaffold](https://github.com/TheAngryByrd/MiniScaffold) and provides
-most of iyts build targets. The list of available targets can be obtained by
+most of its build targets. The list of available targets can be obtained by
 
 ```bash
 ./build.sh ListTargets
@@ -60,11 +63,6 @@ most of iyts build targets. The list of available targets can be obtained by
   [severe performance degradation](https://github.com/SteveGilham/altcover/issues/57) so code coverage
   evaluation are disabled by default to speed up the feedback loop.
   - `ENABLE_COVERAGE=1 ./build.sh` will enable code coverage evaluation
-
-## Documentation
-
-_Disclaimer:_ The type provider supports JSON schemas where the root level type is `object`, other JSON types
-are not supported.
 
 ## License
 
