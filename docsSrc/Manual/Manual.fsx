@@ -33,7 +33,7 @@ the provider is able to deduce a type from the the following schema:
 }
 ```
 
-In contrast, it will fail aty compile-time on this schema
+In contrast, it will, e.g., fail on this schema at compile-time:
 :
 
 ```json
@@ -46,7 +46,7 @@ In contrast, it will fail aty compile-time on this schema
 ```
 
 The rationale is that a JSON array should be mapped to an F# array. This would entail
-that the provided type is only a synonym for an array type and not new type.
+that the provided type is only a synonym for an array type and not a distinguished provided type.
 
 The following table show the supported JSON schema types and the F# types they are
 mapped to:
