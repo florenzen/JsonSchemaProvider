@@ -140,7 +140,8 @@ Here is an example:
 *)
 
 [<Literal>]
-let rangeSchema = """{
+let rangeSchema =
+    """{
   "type": "object",
   "properties": {
     "from": {
@@ -154,10 +155,11 @@ let rangeSchema = """{
   }
 }
 """
+
 type Range = JsonSchemaProvider<schema=rangeSchema>
 
 try
-    Range.Create(from=0, ``to``=11) |> ignore
+    Range.Create(from = 0, ``to`` = 11) |> ignore
 with :? System.ArgumentException as ex ->
     printfn "Error: %s" ex.Message
 
@@ -167,7 +169,8 @@ be omitted in the arguments to `Create` without leading to a compile time error.
 *)
 
 [<Literal>]
-let rangeRequiredSchema = """{
+let rangeRequiredSchema =
+    """{
   "type": "object",
   "properties": {
     "from": {
@@ -182,6 +185,7 @@ let rangeRequiredSchema = """{
   "required": ["from", "to"]
 }
 """
+
 type RangeRequired = JsonSchemaProvider<schema=rangeRequiredSchema>
 
 (**
