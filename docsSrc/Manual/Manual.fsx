@@ -34,7 +34,6 @@ the provider is able to deduce a type from the the following schema:
 ```
 
 In contrast, it will, e.g., fail on this schema at compile-time:
-:
 
 ```json
 {
