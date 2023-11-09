@@ -79,7 +79,8 @@ from that schema (`Xyz` in this case):
 open JsonSchemaProvider
 
 [<Literal>]
-let schema = """{
+let schema =
+    """{
   "type": "object",
   "properties": {
     "X": {
@@ -138,7 +139,8 @@ Here is an example:
 *)
 
 [<Literal>]
-let rangeSchema = """{
+let rangeSchema =
+    """{
   "type": "object",
   "properties": {
     "from": {
@@ -166,7 +168,8 @@ be omitted in the arguments to `Create` without leading to a compile time error.
 *)
 
 [<Literal>]
-let rangeRequiredSchema = """{
+let rangeRequiredSchema =
+    """{
   "type": "object",
   "properties": {
     "from": {
@@ -212,7 +215,8 @@ common in the US:
 *)
 
 [<Literal>]
-let nameSchema = """{
+let nameSchema =
+    """{
   "type": "object",
   "properties": {
     "firstName": {"type": "string"},
@@ -228,7 +232,8 @@ type Name = JsonSchemaProvider<schema=nameSchema>
 For the following name
 *)
 
-let name1 = Name.Create(firstName="Donald", middleInitials="EK", lastName="Knuth")
+let name1 =
+    Name.Create(firstName = "Donald", middleInitials = "EK", lastName = "Knuth")
 
 (**
 we have a `string` for the first name
@@ -252,7 +257,8 @@ JSON Schema to store the global position of a city:
 *)
 
 [<Literal>]
-let cityPosition = """{
+let cityPosition =
+    """{
   "type": "object",
   "properties": {
     "city": {"type": "string"},
@@ -277,7 +283,7 @@ have the name `pObj` where `p` is the name of the property with
 the nested object type:
 *)
 
-let position = CityPosition.globalPositionObj.Create(lat=50, lon=50)
+let position = CityPosition.globalPositionObj.Create(lat = 50, lon = 50)
 // CityPosition.Create("Berlin",position)
 
 (**
