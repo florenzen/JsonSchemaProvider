@@ -26,6 +26,9 @@ namespace JsonSchemaProvider.DesignTime
 open System.IO
 open System.Reflection
 open FSharp.Core.CompilerServices
+open Microsoft.FSharp.Quotations
+open Microsoft.FSharp.Quotations.Patterns
+open Microsoft.FSharp.Reflection
 open ProviderImplementation.ProvidedTypes
 open NJsonSchema
 open FSharp.Data
@@ -215,6 +218,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                               maybeJsonVal |> Option.map (fun (jsonVal: JsonValue) -> jsonVal.AsFloat())
                                           @@>
                                   | JsonObjectType.Array ->
+                                      // TODO: Use Expr to and build a proper conversion from the array's element type that also allows nested types
                                       match prop.Value.Item.Type with
                                       | JsonObjectType.String ->
                                           fun args ->
@@ -325,8 +329,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                    else
                                        [||]
                                @@>
-                           | (JsonObjectType.Number, true) ->
-                               <@@ [| (name, JsonValue.Float((%%arg: float) |> float)) |] @@>
+                           | (JsonObjectType.Number, true) -> <@@ [| (name, JsonValue.Float(%%arg: float)) |] @@>
                            | (JsonObjectType.Number, false) ->
                                <@@
                                    if (%%arg: System.Nullable<float>).HasValue then
@@ -334,6 +337,35 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                    else
                                        [||]
                                @@>
+                           | (JsonObjectType.Array, true) ->
+                               let conv = <@@ JsonValue.Float @@> // TODO: build proper conversion from the array's element type that also allows nesting
+
+                               let ucArray =
+                                   FSharpType.GetUnionCases(typeof<JsonValue>)
+                                   |> Array.find (fun uc -> uc.Name = "Array")
+
+                               let miToArray =
+                                   match <@@ List.toArray [] @@> with
+                                   | Call(_, mi, _) -> mi
+                                   | _ -> failwith "call expected"
+
+                               let miMap =
+                                   match <@@ Array.map id [||] @@> with
+                                   | Call(_, mi, _) -> mi
+                                   | _ -> failwith "call expected"
+
+                               Expr.NewArray(
+                                   typedefof<_ * _>,
+                                   [ Expr.NewTuple(
+                                         [ <@@ name @@>
+                                           Expr.NewUnionCase(
+                                               ucArray,
+                                               [ Expr.Call(miMap, [ conv; Expr.Call(miToArray, [ arg ]) ]) ]
+                                           ) ]
+                                     ) ]
+                               )
+                           //    <@@ [| (name, JsonValue.Array((%%arg: List<float>) |> List.toArray |> Array.map (%%conv))) |] @@>
+
                            | (JsonObjectType.Object, true) -> <@@ [| (name, (%%arg: NullableJsonValue).JsonVal) |] @@>
                            | (JsonObjectType.Object, false) ->
                                <@@

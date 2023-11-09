@@ -168,6 +168,25 @@ module Tests =
                 "create and select nested are equal"
         }
 
+    [<Literal>]
+    let temperatures =
+        """{
+      "type": "object",
+      "properties": {
+        "location": {"type": "string"},
+        "values": {
+          "type": "array",
+          "items": {"type": "number"}
+          }
+      },
+      "required": ["location", "values"]
+    }"""
+
+    type Temperatures = JsonSchemaProvider<schema=temperatures>
+
+    // TODO: Rewrite into test
+    let temps = Temperatures.Create("Munich", [ 11.0; 12.0; 11.6; 12.1 ])
+
     [<Tests>]
     let tests =
         testList
