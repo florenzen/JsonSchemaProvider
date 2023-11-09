@@ -143,8 +143,8 @@ module Tests =
         "globalPosition": {
           "type": "object",
           "properties": {
-            "lat": {"type": "integer"},
-            "lon": {"type": "integer"}
+            "lat": {"type": "number"},
+            "lon": {"type": "number"}
           },
           "required": ["lat", "lon"]
         }
@@ -159,7 +159,7 @@ module Tests =
         test "value from nested objects should be created" {
             Expect.equal
                 (CityPosition
-                    .Create(city = "Berlin", globalPosition = CityPosition.globalPositionObj.Create(lat = 50, lon = 50))
+                    .Create(city = "Berlin", globalPosition = CityPosition.globalPositionObj.Create(lat = 52.520007, lon = 13.404954))
                     .globalPosition.lat)
                 50
                 "create and select nested are equal"
