@@ -343,7 +343,7 @@ blockquote {
 
 #fsdocs-content pre.fssnip code {
     font: 0.86rem 'Roboto Mono', monospace;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 #fsdocs-content table.pre {
