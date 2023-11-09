@@ -325,6 +325,15 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                    else
                                        [||]
                                @@>
+                           | (JsonObjectType.Number, true) ->
+                               <@@ [| (name, JsonValue.Float((%%arg: float) |> float)) |] @@>
+                           | (JsonObjectType.Number, false) ->
+                               <@@
+                                   if (%%arg: System.Nullable<float>).HasValue then
+                                       [| (name, JsonValue.Float((%%arg: System.Nullable<float>).Value)) |]
+                                   else
+                                       [||]
+                               @@>
                            | (JsonObjectType.Object, true) -> <@@ [| (name, (%%arg: NullableJsonValue).JsonVal) |] @@>
                            | (JsonObjectType.Object, false) ->
                                <@@
