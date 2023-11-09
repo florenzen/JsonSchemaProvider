@@ -159,7 +159,10 @@ module Tests =
         test "value from nested objects should be created" {
             Expect.equal
                 (CityPosition
-                    .Create(city = "Berlin", globalPosition = CityPosition.globalPositionObj.Create(lat = 52.520007, lon = 13.404954))
+                    .Create(
+                        city = "Berlin",
+                        globalPosition = CityPosition.globalPositionObj.Create(lat = 52.520007, lon = 13.404954)
+                    )
                     .globalPosition.lat)
                 50
                 "create and select nested are equal"
