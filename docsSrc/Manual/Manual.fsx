@@ -252,7 +252,7 @@ name1.middleInitials
 (**
 ## Nested objects
 
-It is common that objects are nested in JSON. Consider, e.g., the following
+It is common that JSON schemas specify nested objects. Consider, e.g., the following
 JSON Schema to store the global position of a city:
 *)
 
@@ -265,8 +265,8 @@ let cityPosition =
     "globalPosition": {
       "type": "object",
       "properties": {
-        "lat": {"type": "integer"},
-        "lon": {"type": "integer"}
+        "lat": {"type": "number"},
+        "lon": {"type": "number"}
       },
       "required": ["lat", "lon"]
     }
@@ -283,11 +283,39 @@ have the name `pObj` where `p` is the name of the property with
 the nested object type:
 *)
 
-let position = CityPosition.globalPositionObj.Create(lat = 50, lon = 50)
-// CityPosition.Create("Berlin",position)
+let position =
+    CityPosition.globalPositionObj.Create(lat = 52.520007, lon = 13.404954)
+
+let berlinPosition = CityPosition.Create("Berlin", position)
+(*** include-fsi-output ***)
+
+(**
+Nested properties can be selected in the expected way:
+*)
+
+let berlinLat = berlinPosition.globalPosition.lat
+(*** include-fsi-output ***)
 
 (**
 ## Arrays
 
-- One example
+JSON arrays are mapped to F# arrays:
 *)
+
+[<Literal>]
+let temperatures =
+    """{
+  "type": "object",
+  "properties": {
+    "location": {"type": "string"},
+    "values": {
+      "type": "array",
+      "items": {"type": "number"}
+      }
+  },
+  "required": ["location", "values"]
+}"""
+
+type Temperatures = JsonSchemaProvider<schema=temperatures>
+
+// let temps = Temperatures.Create("Munich", [ 11.0; 12.0; 11.6; 12.1 ])
