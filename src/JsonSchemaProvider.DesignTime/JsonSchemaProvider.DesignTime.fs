@@ -325,7 +325,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                    else
                                        [||]
                                @@>
-                           | (JsonObjectType.Object, true) -> <@@ [| (name, %%arg) |] @@>
+                           | (JsonObjectType.Object, true) -> <@@ [| (name, (%%arg: NullableJsonValue).JsonVal) |] @@>
                            | (JsonObjectType.Object, false) ->
                                <@@
                                    match %%arg: NullableJsonValue with
