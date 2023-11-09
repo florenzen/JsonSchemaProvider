@@ -79,8 +79,7 @@ from that schema (`Xyz` in this case):
 open JsonSchemaProvider
 
 [<Literal>]
-let schema =
-    """{
+let schema = """{
   "type": "object",
   "properties": {
     "X": {
@@ -139,8 +138,7 @@ Here is an example:
 *)
 
 [<Literal>]
-let rangeSchema =
-    """{
+let rangeSchema = """{
   "type": "object",
   "properties": {
     "from": {
@@ -168,8 +166,7 @@ be omitted in the arguments to `Create` without leading to a compile time error.
 *)
 
 [<Literal>]
-let rangeRequiredSchema =
-    """{
+let rangeRequiredSchema = """{
   "type": "object",
   "properties": {
     "from": {
@@ -200,17 +197,90 @@ The member or object constructor 'Create' requires 1 argument(s). The required s
 is 'JsonSchemaProvider<...>.Create(from: int, ``to`` : int) : JsonSchemaProvider<...>'.
 ```
 *)
+
 (**
 ## Selecting from values of the provided type
 
-- Required values
-- Optional values
+The properties of a JSON object are exposed as F# properties of the JSON value.
+An optional JSON property of type `T` is exposed as F# property of type `T' option`
+where `T'` is the F# type the JSON type `T` is mapped to.
 
+Likewise, required properties are mapped directly from `T` to `T'`.
+
+Consider the following schema to store names with middle initials as they are
+common in the US:
+*)
+
+[<Literal>]
+let nameSchema = """{
+  "type": "object",
+  "properties": {
+    "firstName": {"type": "string"},
+    "middleInitials": {"type": "string"},
+    "lastName": {"type": "string"}
+  },
+  "required": ["firstName", "lastName"]
+}"""
+
+type Name = JsonSchemaProvider<schema=nameSchema>
+
+(**
+For the following name
+*)
+
+let name1 = Name.Create(firstName="Donald", middleInitials="EK", lastName="Knuth")
+
+(**
+we have a `string` for the first name
+*)
+
+name1.firstName
+(*** include-fsi-output ***)
+
+(**
+and a `string option` for the middle initials:
+*)
+
+name1.middleInitials
+(*** include-fsi-output ***)
+
+(**
 ## Nested objects
 
-- Creation
-- Selection
+It is common that objects are nested in JSON. Consider, e.g., the following
+JSON Schema to store the global position of a city:
+*)
 
+[<Literal>]
+let cityPosition = """{
+  "type": "object",
+  "properties": {
+    "city": {"type": "string"},
+    "globalPosition": {
+      "type": "object",
+      "properties": {
+        "lat": {"type": "integer"},
+        "lon": {"type": "integer"}
+      },
+      "required": ["lat", "lon"]
+    }
+  },
+  "required": ["city", "globalPosition"]
+}
+"""
+
+type CityPosition = JsonSchemaProvider<schema=cityPosition>
+
+(**
+The JSON schema provider creates inner types for nested objects that
+have the name `pObj` where `p` is the name of the property with
+the nested object type:
+*)
+
+let position = CityPosition.globalPositionObj.Create(lat=50, lon=50)
+// CityPosition.Create("Berlin",position)
+
+(**
 ## Arrays
 
 - One example
