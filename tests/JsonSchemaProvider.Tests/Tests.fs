@@ -134,6 +134,32 @@ module Tests =
                 "Parse throws validation exception"
         }
 
+    [<Literal>]
+    let cityPosition =
+        """{
+      "type": "object",
+      "properties": {
+        "city": {"type": "string"},
+        "globalPosition": {
+          "type": "object",
+          "properties": {
+            "lat": {"type": "integer"},
+            "lon": {"type": "integer"}
+          },
+          "required": ["lat", "lon"]
+        }
+      },
+      "required": ["city", "globalPosition"]
+    }
+    """
+
+    type CityPosition = JsonSchemaProvider<schema=cityPosition>
+
+    let valueFromNestedObjectsShouldBeCreated =
+        test "value from nested objects should be created" {
+          CityPosition.Create(city="Berlin", globalPosition=CityPosition.globalPositionObj.Create(lat=50, lon=50))
+        }
+
     [<Tests>]
     let tests =
         testList
