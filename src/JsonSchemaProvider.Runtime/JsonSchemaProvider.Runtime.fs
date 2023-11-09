@@ -44,7 +44,7 @@ module SchemaCache =
     let cacheSchema (schemaSource: string) =
         let hashCode = schemaSource.GetHashCode()
         let schema = parseSchema schemaSource
-        cache.Add(hashCode, schema)
+        cache[hashCode] = schema
 
     let retrieveSchema (hashCode: int) (schemaSource: string) =
         let (available, schema) = cache.TryGetValue(hashCode)
