@@ -104,6 +104,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
             let rec c (ty: System.Type) =
                 printfn "type %O" ty
+
                 if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ list> then
                     let elemTy = ty.GenericTypeArguments[0]
                     let fSharpCore = typeof<List<_>>.Assembly
@@ -112,14 +113,15 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
 
                     let miOfArray =
-                        listModuleType.GetMethods()
-                        |> Array.find (fun methodInfo -> methodInfo.Name = "OfArray")
-                        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(typeof<JsonValue>)
+                        match <@@ List.ofArray (JsonValue.Array([||]).AsArray()) @@> with
+                        | Call(_, mi, _) -> mi
+                        | _ -> failwith "Unexepcted expression"
 
                     let miMap =
                         listModuleType.GetMethods()
                         |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
                         |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(typeof<JsonValue>, elemTy)
+
                     printfn "Method Info map: %O" miMap
                     //                              let jsonVal = (%%args[0]: NullableJsonValue).JsonVal[name]
 
@@ -135,25 +137,36 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     printfn "ggg"
                     let conv = c elemTy
                     printfn "COPNV %O" conv
+
                     for p in miMap.GetParameters() do
-                        printfn "PARS %O" p    
+                        printfn "PARS %O" p
+
                     printfn "RET %O" (miMap.ReturnType)
+
                     let ex =
                         Expr.Lambda(
                             variable,
                             Expr.Call(
                                 miMap,
-                                [ conv
-                                  Expr.Call(miOfArray, [ Expr.Call(miAsArray, [Expr.Var(variable)]) ]) ]
+                                [ conv; Expr.Call(miOfArray, [ Expr.Call(miAsArray, [ Expr.Var(variable) ]) ]) ]
                             )
                         )
+
                     printfn "ex %O" ex
                     ex
-                    let x = JsonValue.Array([|JsonValue.Array([|JsonValue.String("a"); JsonValue.String("b")|])|])
-                    let x1 = List.map (fun (j1:JsonValue) -> List.map (fun (j2: JsonValue) -> j2.AsString()) (List.ofArray (j1.AsArray()))) (List.ofArray (x.AsArray()))
+
+                    let x =
+                        JsonValue.Array([| JsonValue.Array([| JsonValue.String("a"); JsonValue.String("b") |]) |])
+
+                    let x1 =
+                        List.map
+                            (fun (j1: JsonValue) ->
+                                List.map (fun (j2: JsonValue) -> j2.AsString()) (List.ofArray (j1.AsArray())))
+                            (List.ofArray (x.AsArray()))
+
                     ex
                 //<@@ fun (j:JsonValue) -> List.map %%(c elemTy) (List.ofArray (j.AsArray()))@@>
-                
+
                 elif ty = typeof<string> then
                     printfn "return for string"
                     <@@ fun (j: JsonValue) -> j.AsString() @@>
@@ -165,7 +178,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     <@@ fun (j: JsonValue) -> j.AsBoolean() @@>
                 else
                     <@@ fun (j: JsonValue) -> j @@>
-            
+
             printf "ff"
             let f = c returnType
             printfn "f %O" f
@@ -604,6 +617,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
         ty.AddMember(create)
         ty
+
     do
         jsonSchemaTy.DefineStaticParameters(
             parameters = staticParams,
