@@ -71,8 +71,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         | JsonObjectType.Array ->
             let elementTy = determineReturnType name item.Item item ty true item.Type
 
-            let list = typedefof<list<_>>
-            list.MakeGenericType(elementTy)
+            let returnType = if isRequired then typedefof<_ list> else typedefof<option<_ list>>
+            returnType.MakeGenericType(elementTy)
         | JsonObjectType.Object ->
             let innerTy =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name + "Obj", baseType = Some baseTy)
@@ -87,15 +87,6 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 let opt = typedefof<option<_>>
                 opt.MakeGenericType(innerTy)
         | _ -> failwithf "Unsupported type %O" propType
-
-    // and fromJsonVal (name: string) (schema: JsonSchema) =
-    //     fun (args: Expr list) ->
-    //         let fromNullable = <@@ fun (j:NullableJsonValue) -> j.JsonVal[name] @@>
-    //         let selected = Expr.Application fromNullable args[0]
-    //         let convert =
-    //             match schema with
-    //             | JsonObjectType.Integer -> <@@ fun (j:JsonValue) -> j.AsInteger() @@>
-    //             | JsonExtensionObject.Array ->
 
     and fromJsonVal (returnType: System.Type) (name: string) =
         fun (args: Expr list) ->
@@ -587,7 +578,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                                 NullableJsonValue(
                                     JsonValue.Record(
                                         Array.concat (
-                                            (%%(Quotations.Expr.NewArray(
+                                            (%%(Expr.NewArray(
                                                 typeof<(string * JsonValue)[]>,
                                                 processArgs args11
                                             )))
