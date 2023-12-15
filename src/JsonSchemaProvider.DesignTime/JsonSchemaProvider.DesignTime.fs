@@ -43,6 +43,38 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             addDefaultProbingLocation = true
         )
 
+    let fSharpCore = typeof<List<_>>.Assembly
+
+    let listModuleType =
+        fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
+
+    let listToArray (fromType: System.Type) =
+        listModuleType.GetMethods()
+        |> Array.find (fun methodInfo -> methodInfo.Name = "ToArray")
+        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(fromType)
+
+    let listOfArray (fromType: System.Type) =
+        listModuleType.GetMethods()
+        |> Array.find (fun methodInfo -> methodInfo.Name = "OfArray")
+        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(fromType)
+
+    let arrayModuleType =
+        fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ArrayModule")
+
+    let arrayMapToJsonValue (frmoType: System.Type) =
+        arrayModuleType.GetMethods()
+        |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(frmoType, typeof<JsonValue>)
+
+    let listMapFromJsonValue (toType: System.Type) =
+        listModuleType.GetMethods()
+        |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(typeof<JsonValue>, toType)
+    let jsonValueAsArray =
+        match <@@ JsonValue.Array([||]).AsArray() @@> with
+        | Call(_, mi, _) -> mi
+        | _ -> failwith "Unexepcted expression"
+
     let namespaceName = "JsonSchemaProvider"
     let thisAssembly = Assembly.GetExecutingAssembly()
 
@@ -59,7 +91,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         (name: string)
         (item: JsonSchema)
         (schema: JsonSchema)
-        (ty: ProvidedTypeDefinition)
+        (providedTypeDef: ProvidedTypeDefinition)
         (isRequired: bool)
         (propType: JsonObjectType)
         =
@@ -69,23 +101,23 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         | JsonObjectType.Integer -> if isRequired then typeof<int> else typeof<int option>
         | JsonObjectType.Number -> if isRequired then typeof<float> else typeof<float option>
         | JsonObjectType.Array ->
-            let elementTy = determineReturnType name item.Item item ty true item.Type
+            let elementTy = determineReturnType name item.Item item providedTypeDef true item.Type
 
             let returnType = if isRequired then typedefof<_ list> else typedefof<option<_ list>>
             returnType.MakeGenericType(elementTy)
         | JsonObjectType.Object ->
-            let innerTy =
+            let nestedType =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name + "Obj", baseType = Some baseTy)
 
-            generatePropertiesAndCreateForObject innerTy schema |> ignore
+            generatePropertiesAndCreateForObject nestedType schema |> ignore
 
-            ty.AddMember(innerTy)
+            providedTypeDef.AddMember(nestedType)
 
             if isRequired then
-                innerTy
+                nestedType
             else
                 let opt = typedefof<option<_>>
-                opt.MakeGenericType(innerTy)
+                opt.MakeGenericType(nestedType)
         | _ -> failwithf "Unsupported type %O" propType
 
     and fromJsonVal (returnType: System.Type) (name: string) =
@@ -97,49 +129,45 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 printfn "type %O" ty
 
                 if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ list> then
-                    let elemTy = ty.GenericTypeArguments[0]
+                    let elementType = ty.GenericTypeArguments[0]
                     let fSharpCore = typeof<List<_>>.Assembly
 
                     let listModuleType =
                         fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
 
-                    let miOfArray =
-                        match <@@ List.ofArray (JsonValue.Array([||]).AsArray()) @@> with
-                        | Call(_, mi, _) -> mi
-                        | _ -> failwith "Unexepcted expression"
+                    // let listOfArray =
+                    //     match <@@ List.ofArray (JsonValue.Array([||]).AsArray()) @@> with
+                    //     | Call(_, mi, _) -> mi
+                    //     | _ -> failwith "Unexepcted expression"
 
-                    let miMap =
-                        listModuleType.GetMethods()
-                        |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
-                        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(typeof<JsonValue>, elemTy)
+                    // let miMap =
+                    //     listModuleType.GetMethods()
+                    //     |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+                    //     |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(typeof<JsonValue>, elemTy)
 
-                    printfn "Method Info map: %O" miMap
+                    // printfn "Method Info map: %O" miMap
                     //                              let jsonVal = (%%args[0]: NullableJsonValue).JsonVal[name]
 
                     //   jsonVal.AsArray()
                     //   |> List.ofArray
                     //   |> List.map (fun jsonVal -> jsonVal.AsInteger())
-                    let miAsArray =
-                        match <@@ JsonValue.Array([||]).AsArray() @@> with
-                        | Call(_, mi, _) -> mi
-                        | _ -> failwith "Unexepcted expression"
-
+                    
                     let variable = Var("j", typeof<JsonValue>)
                     printfn "ggg"
-                    let conv = c elemTy
+                    let conv = c elementType
                     printfn "COPNV %O" conv
 
-                    for p in miMap.GetParameters() do
-                        printfn "PARS %O" p
+                    // for p in miMap.GetParameters() do
+                    //     printfn "PARS %O" p
 
-                    printfn "RET %O" (miMap.ReturnType)
+                    // printfn "RET %O" (miMap.ReturnType)
 
                     let ex =
                         Expr.Lambda(
                             variable,
                             Expr.Call(
-                                miMap,
-                                [ conv; Expr.Call(miOfArray, [ Expr.Call(miAsArray, [ Expr.Var(variable) ]) ]) ]
+                                listMapFromJsonValue elementType,
+                                [ conv; Expr.Call(listOfArray typeof<JsonValue>, [ Expr.Call(jsonValueAsArray, [ Expr.Var(variable) ]) ]) ]
                             )
                         )
 
@@ -178,18 +206,17 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             ex
 
 
-    and generatePropertiesAndCreateForObject (ty: ProvidedTypeDefinition) (schema: JsonSchema) =
+    and generatePropertiesAndCreateForObject (providedTypeDef: ProvidedTypeDefinition) (schema: JsonSchema) =
         let properties = schema.Properties
         let requiredProperties = schema.RequiredProperties
 
         let parametersForCreate =
-            [ for prop in properties do
-                  let name = prop.Key
-                  let propType = prop.Value.Type
+            [ for (name, schema) in [for property in properties -> (property.Key, property.Value)] do
+                  let propType = schema.Type
                   let isRequired = requiredProperties.Contains(name)
 
                   let returnType =
-                      determineReturnType name prop.Value.Item prop.Value ty isRequired propType
+                      determineReturnType name schema.Item schema providedTypeDef isRequired propType
 
                   let property =
                       ProvidedProperty(
@@ -384,11 +411,11 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                       //       | _ -> failwithf "Unsupported type %O" propType
                       )
 
-                  ty.AddMember(property)
+                  providedTypeDef.AddMember(property)
 
                   yield
                       if isRequired then
-                          (ProvidedParameter(name, returnType, false), propType, prop.Value, isRequired)
+                          (ProvidedParameter(name, returnType, false), propType, schema, isRequired)
                       else
                           let returnTypeWithoutOption = returnType.GenericTypeArguments[0]
 
@@ -401,32 +428,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
                           (ProvidedParameter(name, nullableReturnType, false, defaultValue),
                            propType,
-                           prop.Value,
+                           schema,
                            isRequired) ]
 
         let create =
             let processArgs (args: Quotations.Expr list) =
-                let ucArray =
-                    FSharpType.GetUnionCases(typeof<JsonValue>)
-                    |> Array.find (fun uc -> uc.Name = "Array")
-
-                let fSharpCore = typeof<List<_>>.Assembly
-
-                let listModuleType =
-                    fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
-
-                let miToArray (fromType: System.Type) =
-                    listModuleType.GetMethods()
-                    |> Array.find (fun methodInfo -> methodInfo.Name = "ToArray")
-                    |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(fromType)
-
-                let arrayModuleType =
-                    fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ArrayModule")
-
-                let miMap (toType: System.Type) =
-                    arrayModuleType.GetMethods()
-                    |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
-                    |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(toType, typeof<JsonValue>)
+                
 
                 let rec toJsonValue (parameterType: System.Type) =
                     if
@@ -441,20 +448,19 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         // fun x -> Array.map (fun x -> Array.map (fun x -> JsonValue.String(x)) (List.toArray x)) (List.toArray x)
 
                         // fun x -> List.toArray<innerTy> ()
-                        let ucArray =
+                        let jsonValueArray =
                             FSharpType.GetUnionCases(typeof<JsonValue>)
                             |> Array.find (fun uc -> uc.Name = "Array")
 
-                        let x = System.Guid.NewGuid().ToString()
-                        let variable = Var(x, parameterType)
+                        let typedObjVar = Var("obj", parameterType)
 
                         Expr.Lambda(
-                            variable,
+                            typedObjVar,
                             Expr.NewUnionCase(
-                                ucArray,
+                                jsonValueArray,
                                 [ Expr.Call(
-                                      miMap elemType,
-                                      [ toJsonValue elemType; Expr.Call(miToArray elemType, [ Expr.Var(variable) ]) ]
+                                      arrayMapToJsonValue elemType,
+                                      [ toJsonValue elemType; Expr.Call(listToArray elemType, [ Expr.Var(typedObjVar) ]) ]
                                   ) ]
                             )
                         )
@@ -566,7 +572,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             ProvidedMethod(
                 methodName = "Create",
                 parameters = (parametersForCreate |> List.map (fun (p, _, _, _) -> p)),
-                returnType = ty,
+                returnType = providedTypeDef,
                 isStatic = true,
                 invokeCode =
                     fun args11 ->
@@ -606,8 +612,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         @@>
             )
 
-        ty.AddMember(create)
-        ty
+        providedTypeDef.AddMember(create)
+        providedTypeDef
 
     do
         jsonSchemaTy.DefineStaticParameters(
