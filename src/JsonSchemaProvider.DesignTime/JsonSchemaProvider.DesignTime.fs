@@ -159,7 +159,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 elif ty = typeof<bool> then
                     <@@ fun (j: JsonValue) -> j.AsBoolean() @@>
                 else
-                    <@@ fun (j: JsonValue) -> j @@>
+                    <@@ fun (j: JsonValue) -> NullableJsonValue(j) @@>
 
             let convert = convertFromJsonValue returnType
             Expr.Application(convert, jsonValue)
