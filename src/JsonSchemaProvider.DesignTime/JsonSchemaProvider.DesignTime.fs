@@ -127,16 +127,16 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 opt.MakeGenericType(nestedType)
         | _ -> failwithf "Unsupported type %O" propType
 
-    and fromNullableJsonValue (returnType: System.Type) (name: string) =
+    and fromJsonRecord (isRequired: bool) (returnType: System.Type) (name: string) =
         fun (args: Expr list) ->
-            let fromNullableJsonVal = <@@ fun (j: NullableJsonValue) -> j.JsonVal[name] @@>
+            let fromNullableJsonVal = if isRequired then <@@ fun (j: NullableJsonValue) -> j.JsonVal[name] @@> else <@@fun (j: NullableJsonValue)-> j.JsonVal.TryGetProperty(name) @@>
             let jsonValue = Expr.Application(fromNullableJsonVal, args[0])
 
-            let rec convertFromJsonValue (ty: System.Type) =
+            let rec convertFromRequiredJsonValue (ty: System.Type) =
                 if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ list> then
                     let elementType = ty.GenericTypeArguments[0]
                     let jsonValueVar = Var("jsonValue", typeof<JsonValue>)
-                    let convertElems = convertFromJsonValue elementType
+                    let convertElems = convertFromRequiredJsonValue elementType
 
                     Expr.Lambda(
                         jsonValueVar,
@@ -161,7 +161,20 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 else
                     <@@ fun (j: JsonValue) -> NullableJsonValue(j) @@>
 
-            let convert = convertFromJsonValue returnType
+            let rec convertFromOptionalJsonValue (ty: System.Type) =
+                if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ list> then
+                    failwith "optional arrays nyi"
+                elif ty = typeof<string> then
+                    <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsString()) @@>
+                elif ty = typeof<int> then
+                    <@@ fun (o: JsonValue option) -> o |> Option.map (fun j ->j.AsInteger()) @@>
+                elif ty = typeof<float> then
+                    <@@ fun (o: JsonValue option ) -> o |> Option.map (fun j -> j.AsFloat()) @@>
+                elif ty = typeof<bool> then
+                    <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsBoolean()) @@>
+                else
+                    <@@ fun (o: JsonValue option) -> o @@> 
+            let convert = if isRequired then convertFromRequiredJsonValue returnType else convertFromOptionalJsonValue returnType
             Expr.Application(convert, jsonValue)
 
     and generatePropertiesAndCreateForObject (providedTypeDef: ProvidedTypeDefinition) (schema: JsonSchema) =
@@ -182,7 +195,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                           propertyType = returnType,
                           getterCode =
                               //   if isRequired then
-                              fromNullableJsonValue returnType name
+                              fromJsonRecord isRequired returnType name
                       //   else
                       //       fun args -> Expr.Value("1")
                       //   match propType with
@@ -425,19 +438,24 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     else
                         <@@ fun (x: NullableJsonValue) -> x.JsonVal @@>
 
+                let requiredToRecordArg (parameterName: string) (parameterType: System.Type) (arg: Expr)=
+                        let convert = toJsonValue parameterType in
+                        Expr.NewArray(
+                            typeof<string * JsonValue>,
+                            [ Expr.NewTuple([ <@@ parameterName @@>; Expr.Application(convert, arg) ]) ]) 
+
+                let optionalToRecordArg (parameterName: string) (parameterType: System.Type) = failwith ""
+
 
                 [ for (arg, (parameter, propType, propValue, isRequired)) in List.zip args parametersForCreate do
-                      let name = parameter.Name
-
                       yield
-                          (match (propType, isRequired) with
-                           | (_, true) ->
-                               let convert = toJsonValue parameter.ParameterType
-
-                               Expr.NewArray(
-                                   typeof<string * JsonValue>,
-                                   [ Expr.NewTuple([ <@@ name @@>; Expr.Application(convert, arg) ]) ]
-                               )
+                        if isRequired then
+                            requiredToRecordArg (parameter.Name) (parameter.ParameterType) arg
+                        else
+                            failwith "nyi"
+                ]
+                        //   (match (propType, isRequired) with
+                        //    | (_, true) ->
                            //    | (JsonObjectType.String, true) ->
                            //        let ucString =
                            //            FSharpType.GetUnionCases(typeof<JsonValue>)
@@ -523,7 +541,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                            //            | null -> [||]
                            //            | jVal -> [| (name, jVal.JsonVal) |]
                            //        @@>
-                           | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
+                          //    | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
 
             ProvidedMethod(
                 methodName = "Create",
