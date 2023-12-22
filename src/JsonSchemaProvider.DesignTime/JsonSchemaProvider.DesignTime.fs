@@ -76,6 +76,21 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         | Call(_, mi, _) -> mi
         | _ -> failwith "Unexepcted expression"
 
+    let systemNullablePropertyInfos (elemType: System.Type) =
+        let openType = typedefof<System.Nullable<_>>
+        let closedType = openType.MakeGenericType(elemType)
+        closedType.GetProperties()
+
+    let nullableHasValuePropertyInfo (elemType: System.Type) =
+        systemNullablePropertyInfos elemType
+        |> Array.filter (fun pi -> pi.Name = "HasValue")
+        |> Array.head
+
+    let nullableValuePropertyInfo (elemType: System.Type) =
+        systemNullablePropertyInfos elemType
+        |> Array.filter (fun pi -> pi.Name = "Value")
+        |> Array.head
+
     let namespaceName = "JsonSchemaProvider"
     let thisAssembly = Assembly.GetExecutingAssembly()
 
@@ -168,13 +183,17 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
             let rec convertFromOptionalJsonValue (ty: System.Type) =
                 printfn "convertFromOptionalJsonValue %O" ty
+
                 let withoutOption =
                     if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ option> then
                         ty.GetGenericArguments()[0]
                     else
                         ty
 
-                if withoutOption.IsGenericType && withoutOption.GetGenericTypeDefinition() = typedefof<_ list> then
+                if
+                    withoutOption.IsGenericType
+                    && withoutOption.GetGenericTypeDefinition() = typedefof<_ list>
+                then
                     failwith "optional arrays nyi"
                 elif withoutOption = typeof<string> then
                     <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsString()) @@>
@@ -458,7 +477,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         <@@ fun (x: NullableJsonValue) -> x.JsonVal @@>
 
                 let requiredToRecordArg (parameterName: string) (parameterType: System.Type) (arg: Expr) =
-               
+
                     let convert = toJsonValue parameterType
 
                     Expr.NewArray(
@@ -468,33 +487,37 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
                 let optionalToRecordArg (parameterName: string) (parameterType: System.Type) (arg: Expr) =
                     printfn "paremeterType %O" parameterType
+
                     let withoutNullable =
-                        if parameterType.IsGenericType && parameterType.GetGenericTypeDefinition() = typedefof<System.Nullable<_>> then
+                        if
+                            parameterType.IsGenericType
+                            && parameterType.GetGenericTypeDefinition() = typedefof<System.Nullable<_>>
+                        then
                             parameterType.GetGenericArguments()[0]
                         else
                             parameterType
+
                     let convert = toJsonValue withoutNullable
                     printfn "without nullable %O" withoutNullable
 
-                    let hasValuePropertyInfo: PropertyInfo =
-                        match <@@ System.Nullable(0).HasValue @@> with
-                        | Let(_, _, PropertyGet(_, pi, _)) -> pi
-                        | x -> failwithf "unexpected expr %O" x
 
-                    let valuePropertyInfo: PropertyInfo =
-                        match <@@ System.Nullable(0).Value @@> with
-                        | Let(_, _, PropertyGet(_, pi, _)) -> pi
-                        | x -> failwithf "unexpected expr %O" x
 
                     if
                         withoutNullable.IsGenericType
                         && withoutNullable.GetGenericTypeDefinition() = typedefof<_ list>
                     then
-                        failwith ""
-                    elif withoutNullable = typeof<string> then
-                        failwith ""
-                    elif withoutNullable = typeof<int> then
+                        failwith "array"
+                    elif
+                        withoutNullable = typeof<int>
+                        || withoutNullable = typeof<bool>
+                        || withoutNullable = typeof<float>
+                    then
                         printfn "111"
+                        let hasValuePropertyInfo = nullableHasValuePropertyInfo withoutNullable
+                        printfn "222"
+                        let valuePropertyInfo = nullableValuePropertyInfo withoutNullable
+                        printfn "333"
+
                         let expr =
                             Expr.IfThenElse(
                                 Expr.PropertyGet(arg, hasValuePropertyInfo),
@@ -523,12 +546,19 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     //    [||]
                     // @@>
                     // failwith ""
-                    elif withoutNullable = typeof<float> then
-                        failwith "x float"
-                    elif withoutNullable = typeof<bool> then
-                        failwith "x bool"
+                    elif withoutNullable = typeof<string> then
+
+                        <@@
+                            match %%arg: string with
+                            | null -> [||]
+                            | jVal -> [| (parameterName, (%% Expr.Application(convert, arg): JsonValue)) |]
+                        @@>
                     else
-                        failwith "x other"
+                        <@@
+                            match %%arg: NullableJsonValue with
+                            | null -> [||]
+                            | jVal -> [| (parameterName, (%% Expr.Application(convert, arg): JsonValue)) |]
+                        @@>
 
 
                 [ for (arg, (parameter, propType, propValue, isRequired)) in List.zip args parametersForCreate do
