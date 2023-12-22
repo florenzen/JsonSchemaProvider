@@ -109,7 +109,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 if isRequired then
                     typedefof<_ list>
                 else
-                    typedefof<option<_ list>>
+                    typedefof<(_ list) option>
 
             returnType.MakeGenericType(elementTy)
         | JsonObjectType.Object ->
@@ -129,7 +129,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
     and fromJsonRecord (isRequired: bool) (returnType: System.Type) (name: string) =
         fun (args: Expr list) ->
-            let fromNullableJsonVal = if isRequired then <@@ fun (j: NullableJsonValue) -> j.JsonVal[name] @@> else <@@fun (j: NullableJsonValue)-> j.JsonVal.TryGetProperty(name) @@>
+            let fromNullableJsonVal =
+                if isRequired then
+                    <@@ fun (j: NullableJsonValue) -> j.JsonVal[name] @@>
+                else
+                    <@@ fun (j: NullableJsonValue) -> j.JsonVal.TryGetProperty(name) @@>
+
             let jsonValue = Expr.Application(fromNullableJsonVal, args[0])
 
             let rec convertFromRequiredJsonValue (ty: System.Type) =
@@ -162,19 +167,32 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     <@@ fun (j: JsonValue) -> NullableJsonValue(j) @@>
 
             let rec convertFromOptionalJsonValue (ty: System.Type) =
-                if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ list> then
+                printfn "convertFromOptionalJsonValue %O" ty
+                let withoutOption =
+                    if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ option> then
+                        ty.GetGenericArguments()[0]
+                    else
+                        ty
+
+                if withoutOption.IsGenericType && withoutOption.GetGenericTypeDefinition() = typedefof<_ list> then
                     failwith "optional arrays nyi"
-                elif ty = typeof<string> then
+                elif withoutOption = typeof<string> then
                     <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsString()) @@>
-                elif ty = typeof<int> then
-                    <@@ fun (o: JsonValue option) -> o |> Option.map (fun j ->j.AsInteger()) @@>
-                elif ty = typeof<float> then
-                    <@@ fun (o: JsonValue option ) -> o |> Option.map (fun j -> j.AsFloat()) @@>
-                elif ty = typeof<bool> then
+                elif withoutOption = typeof<int> then
+                    <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsInteger()) @@>
+                elif withoutOption = typeof<float> then
+                    <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsFloat()) @@>
+                elif withoutOption = typeof<bool> then
                     <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsBoolean()) @@>
                 else
-                    <@@ fun (o: JsonValue option) -> o @@> 
-            let convert = if isRequired then convertFromRequiredJsonValue returnType else convertFromOptionalJsonValue returnType
+                    <@@ fun (o: JsonValue option) -> o @@>
+
+            let convert =
+                if isRequired then
+                    convertFromRequiredJsonValue returnType
+                else
+                    convertFromOptionalJsonValue returnType
+
             Expr.Application(convert, jsonValue)
 
     and generatePropertiesAndCreateForObject (providedTypeDef: ProvidedTypeDefinition) (schema: JsonSchema) =
@@ -410,6 +428,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         && parameterType.GetGenericTypeDefinition() = typedefof<_ list>
                     then
                         let elemType = parameterType.GetGenericArguments()[0]
+
                         let jsonValueArray =
                             FSharpType.GetUnionCases(typeof<JsonValue>)
                             |> Array.find (fun uc -> uc.Name = "Array")
@@ -438,110 +457,174 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     else
                         <@@ fun (x: NullableJsonValue) -> x.JsonVal @@>
 
-                let requiredToRecordArg (parameterName: string) (parameterType: System.Type) (arg: Expr)=
-                        let convert = toJsonValue parameterType in
-                        Expr.NewArray(
-                            typeof<string * JsonValue>,
-                            [ Expr.NewTuple([ <@@ parameterName @@>; Expr.Application(convert, arg) ]) ]) 
+                let requiredToRecordArg (parameterName: string) (parameterType: System.Type) (arg: Expr) =
+               
+                    let convert = toJsonValue parameterType
 
-                let optionalToRecordArg (parameterName: string) (parameterType: System.Type) = failwith ""
+                    Expr.NewArray(
+                        typeof<string * JsonValue>,
+                        [ Expr.NewTuple([ <@@ parameterName @@>; Expr.Application(convert, arg) ]) ]
+                    )
+
+                let optionalToRecordArg (parameterName: string) (parameterType: System.Type) (arg: Expr) =
+                    printfn "paremeterType %O" parameterType
+                    let withoutNullable =
+                        if parameterType.IsGenericType && parameterType.GetGenericTypeDefinition() = typedefof<System.Nullable<_>> then
+                            parameterType.GetGenericArguments()[0]
+                        else
+                            parameterType
+                    let convert = toJsonValue withoutNullable
+                    printfn "without nullable %O" withoutNullable
+
+                    let hasValuePropertyInfo: PropertyInfo =
+                        match <@@ System.Nullable(0).HasValue @@> with
+                        | Let(_, _, PropertyGet(_, pi, _)) -> pi
+                        | x -> failwithf "unexpected expr %O" x
+
+                    let valuePropertyInfo: PropertyInfo =
+                        match <@@ System.Nullable(0).Value @@> with
+                        | Let(_, _, PropertyGet(_, pi, _)) -> pi
+                        | x -> failwithf "unexpected expr %O" x
+
+                    if
+                        withoutNullable.IsGenericType
+                        && withoutNullable.GetGenericTypeDefinition() = typedefof<_ list>
+                    then
+                        failwith ""
+                    elif withoutNullable = typeof<string> then
+                        failwith ""
+                    elif withoutNullable = typeof<int> then
+                        printfn "111"
+                        let expr =
+                            Expr.IfThenElse(
+                                Expr.PropertyGet(arg, hasValuePropertyInfo),
+                                Expr.NewArray(
+                                    typeof<string * JsonValue>,
+                                    [ Expr.NewTuple(
+                                          [ <@@ parameterName @@>
+                                            Expr.Application(convert, Expr.PropertyGet(arg, valuePropertyInfo)) ]
+                                      ) ]
+                                ),
+                                Expr.NewArray(typeof<string * JsonValue>, [])
+                            )
+
+                        printfn "expr %O " expr
+                        expr
+                    // <@@ if arg.HasValue then
+                    //       [| (parameterName, convert (arg.Value) ) |]
+                    //     else
+                    //       [||]
+                    // @@>
+                    // Expr.Let(Var("x", typeof<System.Nullable<int>>), Expr.Application(convert, arg), Expr.IfThenElse(Expr.Var()))
+                    // <@@
+                    //  if (%%arg: System.Nullable<int>).HasValue then
+                    //    [| (parameterName, JsonValue.Float((%%arg: System.Nullable<int>).Value)) |]
+                    //  else
+                    //    [||]
+                    // @@>
+                    // failwith ""
+                    elif withoutNullable = typeof<float> then
+                        failwith "x float"
+                    elif withoutNullable = typeof<bool> then
+                        failwith "x bool"
+                    else
+                        failwith "x other"
 
 
                 [ for (arg, (parameter, propType, propValue, isRequired)) in List.zip args parametersForCreate do
                       yield
-                        if isRequired then
-                            requiredToRecordArg (parameter.Name) (parameter.ParameterType) arg
-                        else
-                            failwith "nyi"
-                ]
-                        //   (match (propType, isRequired) with
-                        //    | (_, true) ->
-                           //    | (JsonObjectType.String, true) ->
-                           //        let ucString =
-                           //            FSharpType.GetUnionCases(typeof<JsonValue>)
-                           //            |> Array.find (fun uc -> uc.Name = "String")
+                          if isRequired then
+                              requiredToRecordArg (parameter.Name) (parameter.ParameterType) arg
+                          else
+                              optionalToRecordArg (parameter.Name) (parameter.ParameterType) arg ]
+            //   (match (propType, isRequired) with
+            //    | (_, true) ->
+            //    | (JsonObjectType.String, true) ->
+            //        let ucString =
+            //            FSharpType.GetUnionCases(typeof<JsonValue>)
+            //            |> Array.find (fun uc -> uc.Name = "String")
 
-                           //        Expr.NewArray(
-                           //            typeof<string * JsonValue>,
-                           //            [ Expr.NewTuple([ <@@ name @@>; Expr.NewUnionCase(ucString, [ arg ]) ]) ]
-                           //        )
-                           //    //<@@ [| (name, JsonValue.String(%%arg: string)) |] @@>
-                           //    | (JsonObjectType.String, false) ->
-                           //        <@@
-                           //            match %%arg: string with
-                           //            | null -> [||]
-                           //            | value -> [| (name, JsonValue.String(value)) |]
-                           //        @@>
-                           //    | (JsonObjectType.Integer, true) ->
-                           //        <@@ [| (name, JsonValue.Float((%%arg: int) |> float)) |] @@>
-                           //    | (JsonObjectType.Integer, false) ->
-                           //        <@@
-                           //            if (%%arg: System.Nullable<int>).HasValue then
-                           //                [| (name, JsonValue.Float((%%arg: System.Nullable<int>).Value)) |]
-                           //            else
-                           //                [||]
-                           //        @@>
-                           //    | (JsonObjectType.Number, true) -> <@@ [| (name, JsonValue.Float(%%arg: float)) |] @@>
-                           //    | (JsonObjectType.Number, false) ->
-                           //        <@@
-                           //            if (%%arg: System.Nullable<float>).HasValue then
-                           //                [| (name, JsonValue.Float((%%arg: System.Nullable<float>).Value)) |]
-                           //            else
-                           //                [||]
-                           //        @@>
-                           //    | (JsonObjectType.Array, true) ->
+            //        Expr.NewArray(
+            //            typeof<string * JsonValue>,
+            //            [ Expr.NewTuple([ <@@ name @@>; Expr.NewUnionCase(ucString, [ arg ]) ]) ]
+            //        )
+            //    //<@@ [| (name, JsonValue.String(%%arg: string)) |] @@>
+            //    | (JsonObjectType.String, false) ->
+            //        <@@
+            //            match %%arg: string with
+            //            | null -> [||]
+            //            | value -> [| (name, JsonValue.String(value)) |]
+            //        @@>
+            //    | (JsonObjectType.Integer, true) ->
+            //        <@@ [| (name, JsonValue.Float((%%arg: int) |> float)) |] @@>
+            //    | (JsonObjectType.Integer, false) ->
+            //        <@@
+            //            if (%%arg: System.Nullable<int>).HasValue then
+            //                [| (name, JsonValue.Float((%%arg: System.Nullable<int>).Value)) |]
+            //            else
+            //                [||]
+            //        @@>
+            //    | (JsonObjectType.Number, true) -> <@@ [| (name, JsonValue.Float(%%arg: float)) |] @@>
+            //    | (JsonObjectType.Number, false) ->
+            //        <@@
+            //            if (%%arg: System.Nullable<float>).HasValue then
+            //                [| (name, JsonValue.Float((%%arg: System.Nullable<float>).Value)) |]
+            //            else
+            //                [||]
+            //        @@>
+            //    | (JsonObjectType.Array, true) ->
 
-                           //        let (convertToJsonValue, toType) =
-                           //            match propValue.Item.Type with
-                           //            | JsonObjectType.Number -> (<@@ fun num -> JsonValue.Float(num) @@>, typeof<float>) // TODO: build proper conversion from the array's element type that also allows nesting
-                           //            | JsonObjectType.Integer -> (<@@ fun num -> JsonValue.Number(num) @@>, typeof<int>)
+            //        let (convertToJsonValue, toType) =
+            //            match propValue.Item.Type with
+            //            | JsonObjectType.Number -> (<@@ fun num -> JsonValue.Float(num) @@>, typeof<float>) // TODO: build proper conversion from the array's element type that also allows nesting
+            //            | JsonObjectType.Integer -> (<@@ fun num -> JsonValue.Number(num) @@>, typeof<int>)
 
-                           //        let ucArray =
-                           //            FSharpType.GetUnionCases(typeof<JsonValue>)
-                           //            |> Array.find (fun uc -> uc.Name = "Array")
+            //        let ucArray =
+            //            FSharpType.GetUnionCases(typeof<JsonValue>)
+            //            |> Array.find (fun uc -> uc.Name = "Array")
 
-                           //        let fSharpCore = typeof<List<_>>.Assembly
+            //        let fSharpCore = typeof<List<_>>.Assembly
 
-                           //        let listModuleType =
-                           //            fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
+            //        let listModuleType =
+            //            fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
 
-                           //        let miToArray =
-                           //            listModuleType.GetMethods()
-                           //            |> Array.find (fun methodInfo -> methodInfo.Name = "ToArray")
-                           //            |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(toType)
+            //        let miToArray =
+            //            listModuleType.GetMethods()
+            //            |> Array.find (fun methodInfo -> methodInfo.Name = "ToArray")
+            //            |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(toType)
 
-                           //        let arrayModuleType =
-                           //            fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ArrayModule")
+            //        let arrayModuleType =
+            //            fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ArrayModule")
 
-                           //        let miMap =
-                           //            arrayModuleType.GetMethods()
-                           //            |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
-                           //            |> fun genericMethodInfo ->
-                           //                genericMethodInfo.MakeGenericMethod(toType, typeof<JsonValue>)
+            //        let miMap =
+            //            arrayModuleType.GetMethods()
+            //            |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+            //            |> fun genericMethodInfo ->
+            //                genericMethodInfo.MakeGenericMethod(toType, typeof<JsonValue>)
 
-                           //        Expr.NewArray(
-                           //            typeof<string * JsonValue>,
-                           //            [ Expr.NewTuple(
-                           //                  [ <@@ name @@>
-                           //                    Expr.NewUnionCase(
-                           //                        ucArray,
-                           //                        [ Expr.Call(miMap, [ convertToJsonValue; Expr.Call(miToArray, [ arg ]) ]) ]
-                           //                    ) ]
-                           //              ) ]
-                           //        )
-                           //    // this works:
-                           //    //    <@@
-                           //    //        [| (name, JsonValue.Array((%%arg: List<float>) |> List.toArray |> Array.map (%%conv))) |]
-                           //    //    @@>
+            //        Expr.NewArray(
+            //            typeof<string * JsonValue>,
+            //            [ Expr.NewTuple(
+            //                  [ <@@ name @@>
+            //                    Expr.NewUnionCase(
+            //                        ucArray,
+            //                        [ Expr.Call(miMap, [ convertToJsonValue; Expr.Call(miToArray, [ arg ]) ]) ]
+            //                    ) ]
+            //              ) ]
+            //        )
+            //    // this works:
+            //    //    <@@
+            //    //        [| (name, JsonValue.Array((%%arg: List<float>) |> List.toArray |> Array.map (%%conv))) |]
+            //    //    @@>
 
-                           //    | (JsonObjectType.Object, true) -> <@@ [| (name, (%%arg: NullableJsonValue).JsonVal) |] @@>
-                           //    | (JsonObjectType.Object, false) ->
-                           //        <@@
-                           //            match %%arg: NullableJsonValue with
-                           //            | null -> [||]
-                           //            | jVal -> [| (name, jVal.JsonVal) |]
-                           //        @@>
-                          //    | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
+            //    | (JsonObjectType.Object, true) -> <@@ [| (name, (%%arg: NullableJsonValue).JsonVal) |] @@>
+            //    | (JsonObjectType.Object, false) ->
+            //        <@@
+            //            match %%arg: NullableJsonValue with
+            //            | null -> [||]
+            //            | jVal -> [| (name, jVal.JsonVal) |]
+            //        @@>
+            //    | (jsonObjectType, _) -> failwithf "Unsupported type %O" jsonObjectType) ]
 
             ProvidedMethod(
                 methodName = "Create",
@@ -552,13 +635,15 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     fun args ->
                         let schemaSource = schema.ToJson()
                         let schemaHashCode = schemaSource.GetHashCode()
+                        let arrays = processArgs args
+                        printfn "args %O" arrays
 
                         <@@
                             let record =
                                 NullableJsonValue(
                                     JsonValue.Record(
                                         Array.concat (
-                                            (%%(Expr.NewArray(typeof<(string * JsonValue)[]>, processArgs args)))
+                                            (%%(Expr.NewArray(typeof<(string * JsonValue)[]>, arrays)))
                                             : (string * JsonValue)[][]
                                         )
                                     )
