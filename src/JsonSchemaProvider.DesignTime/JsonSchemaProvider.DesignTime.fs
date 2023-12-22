@@ -48,6 +48,14 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     let listModuleType =
         fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
 
+    let optionModuleType =
+        fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "OptionModule")
+
+    let optionMap (toType: System.Type) =
+        optionModuleType.GetMethods()
+        |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+        |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(typeof<JsonValue>, toType)
+
     let listToArray (fromType: System.Type) =
         listModuleType.GetMethods()
         |> Array.find (fun methodInfo -> methodInfo.Name = "ToArray")
@@ -120,13 +128,17 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
             let elementTy =
                 determineReturnType name item.Item item providedTypeDef true item.Type
 
+            let listType = typedefof<_ list>.MakeGenericType(elementTy)
+
             let returnType =
                 if isRequired then
-                    typedefof<_ list>
+                    listType
                 else
-                    typedefof<(_ list) option>
+                    typedefof<_ option>.MakeGenericType(listType)
 
-            returnType.MakeGenericType(elementTy)
+            printfn "detRetType returnType %O" returnType
+            printfn "detRetType elementType %O" elementTy
+            returnType
         | JsonObjectType.Object ->
             let nestedType =
                 ProvidedTypeDefinition(thisAssembly, namespaceName, name + "Obj", baseType = Some baseTy)
@@ -194,7 +206,32 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     withoutOption.IsGenericType
                     && withoutOption.GetGenericTypeDefinition() = typedefof<_ list>
                 then
-                    failwith "optional arrays nyi"
+                    // failwith "optional arrays nyi"
+
+                    let elementType = withoutOption.GenericTypeArguments[0]
+                    let jsonValueVar = Var("jsonValue", typeof<JsonValue option>)
+                    let innerVar = Var("innerVar", typeof<JsonValue>)
+                    let convertElems = convertFromRequiredJsonValue elementType
+                    let optionMap: MethodInfo = optionMap withoutOption
+
+                    Expr.Lambda(
+                        jsonValueVar,
+                        Expr.Call(
+                            optionMap,
+                            [ Expr.Lambda(
+                                  innerVar,
+                                  Expr.Call(
+                                      listMapFromJsonValue elementType,
+                                      [ convertElems
+                                        Expr.Call(
+                                            listOfArray typeof<JsonValue>,
+                                            [ Expr.Call(jsonValueAsArray, [ Expr.Var(innerVar) ]) ]
+                                        ) ]
+                                  )
+                              )
+                              Expr.Var(jsonValueVar) ]
+                        )
+                    )
                 elif withoutOption = typeof<string> then
                     <@@ fun (o: JsonValue option) -> o |> Option.map (fun j -> j.AsString()) @@>
                 elif withoutOption = typeof<int> then
@@ -225,6 +262,8 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
 
                   let returnType =
                       determineReturnType name schema.Item schema providedTypeDef isRequired propType
+
+                  printfn "generatePropAndCreate return tyoe %O" returnType
 
                   let property =
                       ProvidedProperty(
@@ -506,7 +545,35 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         withoutNullable.IsGenericType
                         && withoutNullable.GetGenericTypeDefinition() = typedefof<_ list>
                     then
-                        failwith "array"
+                        // MISSING
+                        <@@
+                            match %%arg: string list with
+                            | null -> [||]
+                            | jVal -> [| (parameterName, (%% Expr.Application(convert, arg): JsonValue)) |]
+                        @@>
+                        // <@@ [||]: (string * JsonValue)[] @@>
+                    // failwith "nyi"
+                    // printfn "array 111"
+                    // let hasValuePropertyInfo = nullableHasValuePropertyInfo withoutNullable
+                    // printfn "array 222"
+                    // let valuePropertyInfo = nullableValuePropertyInfo withoutNullable
+                    // printfn "array 333"
+
+                    // let expr =
+                    //     Expr.IfThenElse(
+                    //         Expr.PropertyGet(arg, hasValuePropertyInfo),
+                    //         Expr.NewArray(
+                    //             typeof<string * JsonValue>,
+                    //             [ Expr.NewTuple(
+                    //                   [ <@@ parameterName @@>
+                    //                     Expr.Application(convert, Expr.PropertyGet(arg, valuePropertyInfo)) ]
+                    //               ) ]
+                    //         ),
+                    //         Expr.NewArray(typeof<string * JsonValue>, [])
+                    //     )
+
+                    // printfn "expr %O " expr
+                    // expr
                     elif
                         withoutNullable = typeof<int>
                         || withoutNullable = typeof<bool>
