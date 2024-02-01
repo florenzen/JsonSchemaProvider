@@ -84,6 +84,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
         | Call(_, mi, _) -> mi
         | _ -> failwith "Unexepcted expression"
 
+    let opEqualityMi = match <@@ (=) @@> with | Lambda(_, Lambda(_, Call(_, mi, _))) -> mi | _ -> failwith "cannot happen"
     let systemNullablePropertyInfos (elemType: System.Type) =
         let openType = typedefof<System.Nullable<_>>
         let closedType = openType.MakeGenericType(elemType)
@@ -545,12 +546,25 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                         withoutNullable.IsGenericType
                         && withoutNullable.GetGenericTypeDefinition() = typedefof<_ list>
                     then
+                        
+                        let expr = Expr.IfThenElse(Expr.Call(opEqualityMi, [arg; Expr.Value(null)]),
+                            Expr.NewArray(typeof<string * JsonValue>, []),
+                            Expr.NewArray(
+                                typeof<string * JsonValue>,
+                                [ Expr.NewTuple(
+                                      [ <@@ parameterName @@>
+                                        Expr.Application(convert, arg) ]
+                                  ) ]
+                            ))
+                        expr
                         // MISSING
-                        <@@
-                            match %%arg: string list with
-                            | null -> [||]
-                            | jVal -> [| (parameterName, (%% Expr.Application(convert, arg): JsonValue)) |]
-                        @@>
+                        // <@@
+                        //     match (%%arg: string list):>obj with
+                        //     | null -> [||]
+                        //     | jVal ->
+                        //         printfn $"I got null"
+                        //         [| (parameterName, (%% Expr.Application(convert, (arg:> string list)): JsonValue)) |]
+                        // @@>
                     // <@@ [||]: (string * JsonValue)[] @@>
                     // failwith "nyi"
                     // printfn "array 111"
