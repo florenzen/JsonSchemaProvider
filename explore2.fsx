@@ -22,4 +22,3 @@ let parseSchema (schemaSource: string) =
 let x = (parseSchema nestedArray)
 
 printfn "%O" x
-
