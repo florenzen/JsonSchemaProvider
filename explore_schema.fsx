@@ -54,11 +54,11 @@ let rec tyFromJsonSchema (s: JsonSchema) =
     | JsonObjectType.String -> typeof<string>
     | JsonObjectType.Number -> typeof<float>
     | JsonObjectType.Boolean -> typeof<bool>
-    
+
     | JsonObjectType.Array ->
-      let innerTy = tyFromJsonSchema s.Item
-      let genList = typedefof<list<_>>
-      genList.MakeGenericType(innerTy)
+        let innerTy = tyFromJsonSchema s.Item
+        let genList = typedefof<list<_>>
+        genList.MakeGenericType(innerTy)
 
 let rec selectFromJsonValue (s: JsonSchema) =
     let asInt = <@@ fun (j: JsonValue) -> j.AsInteger() @@>
@@ -66,6 +66,5 @@ let rec selectFromJsonValue (s: JsonSchema) =
     fun (args: Expr list) ->
         (match s.Type with
          | JsonObjectType.Array -> failwith "nyi" // j.AsArray() |> Array.toList |> List.map (fun x -> x.AsInteger())
-           // j.AsArray() |> Array.toList |> List.map (fun x -> x.AsArray() |> Array.toList |> List.map (fun x -> x .AsInteger()))
+         // j.AsArray() |> Array.toList |> List.map (fun x -> x.AsArray() |> Array.toList |> List.map (fun x -> x .AsInteger()))
          | JsonObjectType.Integer -> Expr.Application asInt (args[0]))
-         

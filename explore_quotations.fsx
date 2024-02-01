@@ -9,5 +9,5 @@ open FSharp.Data
 // <@@ [| ("foo", JsonValue.Array(Array.map (%%conv) (List.toArray (%%arg)))) |] @@>
 
 
-<@@ List.map (fun x -> x) [1,2,3]@@>
+<@@ List.map (fun x -> x) [ 1, 2, 3 ] @@>
 <@@ JsonValue.Array([||]).AsArray() @@>

@@ -551,7 +551,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                             | null -> [||]
                             | jVal -> [| (parameterName, (%% Expr.Application(convert, arg): JsonValue)) |]
                         @@>
-                        // <@@ [||]: (string * JsonValue)[] @@>
+                    // <@@ [||]: (string * JsonValue)[] @@>
                     // failwith "nyi"
                     // printfn "array 111"
                     // let hasValuePropertyInfo = nullableHasValuePropertyInfo withoutNullable
