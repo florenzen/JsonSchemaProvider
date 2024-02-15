@@ -236,19 +236,7 @@ let schema11 =
     },
     required: ["values"]
 }"""
-// let schema11 =
-//     """
-// {
-//     "type": "object",
-//     "properties": {
-//         "values": {
-//             "type": "array",
-//             "items": {
-//                 "type": "string"
-//             }
-//         }
-//     },
-// }"""
+
 
 type ProvidedType11 = JsonSchemaProvider<schema=schema11>
 
@@ -256,4 +244,36 @@ let value11 = ProvidedType11.Create(values=[]);
 printfn "Object with optional array of objects with optional props: %O" value11
 
 let value11_1 = ProvidedType11.Create(values=[ProvidedType11.valuesObj.Create(propA=1, propB="aa")]);
+printfn "Object with optional array of objects with optional props: %O" value11_1
+
+
+[<Literal>]
+let schema12 =
+    """
+{
+    "type": "object",
+    "properties": {
+        "values": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "propA": {"type": "integer"},
+                        "propB": {"type": "string"}
+                    }
+                }
+            }
+        }
+    }
+}"""
+
+
+type ProvidedType12 = JsonSchemaProvider<schema=schema11>
+
+let value12 = ProvidedType12.Create(values=[[]]);
+printfn "Object with optional array of objects with optional props: %O" value11
+
+let value12_1 = ProvidedType11.Create(values=[[ProvidedType12.valuesObj.Create(propA=1, propB="aa")]]);
 printfn "Object with optional array of objects with optional props: %O" value11_1
