@@ -162,11 +162,12 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     <@@ fun (j: NullableJsonValue) -> j.JsonVal[name] @@>
                 else
                     <@@ fun (j: NullableJsonValue) -> j.JsonVal.TryGetProperty(name) @@>
-
+            printfn "FJR 1"
             let jsonValue = Expr.Application(fromNullableJsonVal, args[0])
 
             let rec convertFromRequiredJsonValue (ty: System.Type) =
                 if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<_ list> then
+                    printfn "IN THE LIST CASE"
                     let elementType = ty.GenericTypeArguments[0]
                     let jsonValueVar = Var("jsonValue", typeof<JsonValue>)
                     let convertElems = convertFromRequiredJsonValue elementType
@@ -192,6 +193,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 elif ty = typeof<bool> then
                     <@@ fun (j: JsonValue) -> j.AsBoolean() @@>
                 else
+                    printfn "ELSE"
                     <@@ fun (j: JsonValue) -> NullableJsonValue(j) @@>
 
             let rec convertFromOptionalJsonValue (ty: System.Type) =
@@ -459,12 +461,16 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                       //       | _ -> failwithf "Unsupported type %O" propType
                       )
 
+                  printfn "PROPERTY GOING TO ADD"  
                   providedTypeDef.AddMember(property)
+                  printfn "ADDED PROPERTY"
 
                   yield
                       if isRequired then
+                          printfn "IS REQUIRED"
                           (ProvidedParameter(name, returnType, false), propType, schema, isRequired)
                       else
+                          printfn "NOT REQUIRED"
                           let returnTypeWithoutOption = returnType.GenericTypeArguments[0]
 
                           let (nullableReturnType, defaultValue) =
@@ -488,20 +494,28 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                     then
                         let elemType = parameterType.GetGenericArguments()[0]
 
+                        // TODO nesting?
+                        let elemType = if elemType.Name.Contains("Obj") then typeof<NullableJsonValue> else elemType
+
                         let jsonValueArray =
                             FSharpType.GetUnionCases(typeof<JsonValue>)
                             |> Array.find (fun uc -> uc.Name = "Array")
 
-                        let typedObjVar = Var("obj", parameterType)
-
+                        // TODO nesting?
+                        let pType = typedefof<_ list>.MakeGenericType(elemType)
+                        let typedObjVar = Var("obj", pType)
+                        //let eType = if elemType.Name.Contains("values") then typeof<int> else elemType
+                        let mi = arrayMapToJsonValue elemType
+                        let tjv = toJsonValue elemType
+                        let mi2 = listToArray elemType
                         Expr.Lambda(
                             typedObjVar,
                             Expr.NewUnionCase(
                                 jsonValueArray,
                                 [ Expr.Call(
-                                      arrayMapToJsonValue elemType,
-                                      [ toJsonValue elemType
-                                        Expr.Call(listToArray elemType, [ Expr.Var(typedObjVar) ]) ]
+                                      mi,
+                                      [ tjv
+                                        Expr.Call(mi2, [ Expr.Var(typedObjVar) ]) ]
                                   ) ]
                             )
                         )
@@ -645,6 +659,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
                 [ for (arg, (parameter, propType, propValue, isRequired)) in List.zip args parametersForCreate do
                       yield
                           if isRequired then
+                              printfn "REQUIRED TO RECORD ARG"
                               requiredToRecordArg (parameter.Name) (parameter.ParameterType) arg
                           else
                               optionalToRecordArg (parameter.Name) (parameter.ParameterType) arg ]
