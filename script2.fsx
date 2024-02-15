@@ -254,3 +254,6 @@ type ProvidedType11 = JsonSchemaProvider<schema=schema11>
 
 let value11 = ProvidedType11.Create(values=[]);
 printfn "Object with optional array of objects with optional props: %O" value11
+
+let value11_1 = ProvidedType11.Create(values=[ProvidedType11.valuesObj.Create(propA=1, propB="aa")]);
+printfn "Object with optional array of objects with optional props: %O" value11_1
