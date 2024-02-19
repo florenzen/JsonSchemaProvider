@@ -35,7 +35,9 @@ let schema11 =
         }
     },
 }"""
-let x = JsonSchema.FromJsonAsync(schema11) |> Async.AwaitTask |> Async.RunSynchronously
+
+let x =
+    JsonSchema.FromJsonAsync(schema11) |> Async.AwaitTask |> Async.RunSynchronously
 
 x
 
