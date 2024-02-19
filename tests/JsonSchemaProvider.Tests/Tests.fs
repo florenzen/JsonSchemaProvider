@@ -224,10 +224,10 @@ module Tests =
 
     type NestedArray = JsonSchemaProvider<schema=nestedArray>
 
-    let selectFromIntegerArrayShouldYieldInputValue =
-        let nestArray = NestedArray.Create([ [ "a"; "b" ] ])
-        printfn "XX %O" ((nestArray.values))
-        test "x" { Expect.equal 1 1 "1=1" }
+    // let selectFromIntegerArrayShouldYieldInputValue =
+    //     let nestArray = NestedArray.Create([ [ "a"; "b" ] ])
+    //     printfn "XX %O" ((nestArray.values))
+    //     test "x" { Expect.equal 1 1 "1=1" }
     // test "select from integer array should yield input value" {
     //     Expect.equal (nestArray.values[0][1]) "b" "nestedArray.values[0][1] = \"b\""
     // }
