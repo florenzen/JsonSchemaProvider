@@ -167,7 +167,12 @@ let value8 = ProvidedType8.Create(values = "text")
 printfn "optional string %O" (value8.values)
 
 let value8_1 = ProvidedType7.Create()
-printfn "missing optional string %O" (match value8_1.values with | None -> "None" | _ -> "Some")
+
+printfn
+    "missing optional string %O"
+    (match value8_1.values with
+     | None -> "None"
+     | _ -> "Some")
 
 
 
@@ -190,7 +195,11 @@ let value9 = ProvidedType9.Create(values = [ "a"; "3" ])
 printfn "optional string array %O" (value9.values)
 
 let value9_1 = ProvidedType9.Create()
-printfn "empty optional string array %O" (match value9_1.values with | None -> "None")
+
+printfn
+    "empty optional string array %O"
+    (match value9_1.values with
+     | None -> "None")
 
 
 [<Literal>]
@@ -214,7 +223,7 @@ type ProvidedType10 = JsonSchemaProvider<schema=schema10>
 let value10 = ProvidedType10.Create()
 printfn "optional array of array of string %O %O" ((value10.values)) None
 
-let value10_1 = ProvidedType10.Create(values = [["a"; "b"; "c"]])
+let value10_1 = ProvidedType10.Create(values = [ [ "a"; "b"; "c" ] ])
 printfn "optional array of array of string %O" (value10_1.values)
 
 [<Literal>]
@@ -240,10 +249,12 @@ let schema11 =
 
 type ProvidedType11 = JsonSchemaProvider<schema=schema11>
 
-let value11 = ProvidedType11.Create(values=[]);
+let value11 = ProvidedType11.Create(values = [])
 printfn "Object with optional array of objects with optional props: %O" value11
 
-let value11_1 = ProvidedType11.Create(values=[ProvidedType11.valuesObj.Create(propA=1, propB="aa")]);
+let value11_1 =
+    ProvidedType11.Create(values = [ ProvidedType11.valuesObj.Create(propA = 1, propB = "aa") ])
+
 printfn "Object with optional array of objects with optional props: %O" value11_1
 
 
@@ -272,8 +283,10 @@ let schema12 =
 
 type ProvidedType12 = JsonSchemaProvider<schema=schema11>
 
-let value12 = ProvidedType12.Create(values=[[]]);
+let value12 = ProvidedType12.Create(values = [ [] ])
 printfn "Object with optional array of objects with optional props: %O" value11
 
-let value12_1 = ProvidedType11.Create(values=[[ProvidedType12.valuesObj.Create(propA=1, propB="aa")]]);
+let value12_1 =
+    ProvidedType11.Create(values = [ [ ProvidedType12.valuesObj.Create(propA = 1, propB = "aa") ] ])
+
 printfn "Object with optional array of objects with optional props: %O" value11_1
