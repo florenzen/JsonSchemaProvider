@@ -23,20 +23,10 @@
 
 namespace JsonSP.DesignTime
 
-
-open System
-open System.IO
-open System.Reflection
-open FSharp.Core.CompilerServices
-open Microsoft.FSharp.Quotations
-open Microsoft.FSharp.Quotations.Patterns
-open Microsoft.FSharp.Reflection
-open ProviderImplementation.ProvidedTypes
-open NJsonSchema
-open FSharp.Data
-open JsonSchemaProvider
-
 module SchemaRep =
+    open NJsonSchema
+    open JsonSchemaProvider
+
     type JsonProperty =
         { Name: string
           Optional: bool
