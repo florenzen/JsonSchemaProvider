@@ -28,29 +28,77 @@ module SchemaRepTests =
     open Expecto
 
     [<Literal>]
+    let flatObject =
+        """
+        {
+            "type": "object",
+            "properties": {
+                "X": { "type": "string" },
+                "Y": { "type": "string" },
+                "Z": { "type": "integer" }
+            }
+        }"""
+
+    [<Literal>]
     let nestedArrayWithObjectItems =
         """
-    {
-        "type": "object",
-        "properties": {
-            "values": {
-                "type": "array",
-                "items": {
+        {
+            "type": "object",
+            "properties": {
+                "values": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "propA": {"type": "integer"},
-                            "propB": {"type": "string"}
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "propA": {"type": "integer"},
+                                "propB": {"type": "string"}
+                            }
                         }
                     }
                 }
             }
-        }
-    }"""
+        }"""
 
-    let test1 =
-        test "test1" {
+    [<Literal>]
+    let nestedObjects =
+        """
+        {
+            "type": "object",
+            "properties": {
+                "header": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "sender": {"type": "string"},
+                        "resend": {"type": "boolean"},
+                        "time": {
+                            "type": "object",
+                            "properties": {
+                                "hour": {"type": "integer"},
+                                "minute": {"type": "integer"},
+                                "second": {"type": "integer"}
+                            },
+                            "required": ["hour", "minute", "second"]
+                        }
+                    },
+                    "required": ["id", "sender"]
+                },
+                "body": {
+                    "type": "object",
+                    "properties": {
+                        "length": {"type": "integer"},
+                        "payload": {"type": "string"}
+                    },
+                    "required": ["length", "payload"]
+                }
+            },
+            "required": ["body"]
+        }"""
+
+    let nestedArrayWithObjectItemsShouldBeParsedCorrectly =
+        test "NestedArrayWithObjectItems should be parsed correctly" {
             let actual = parseJsonSchema nestedArrayWithObjectItems
 
             let expected =
@@ -77,34 +125,145 @@ module SchemaRepTests =
 
         }
 
-    let test2 =
-        test "test2" {
-            let actual = parseJsonSchema nestedArrayWithObjectItems
-            // |> transformJsonObjToFSharpType "Nested"
+    let flatObjectShouldLeadToOneClass =
+        test "FlatObject should lead to one class" {
+            let actual = parseJsonSchema flatObject |> jsonObjToFSharpRep "FlatObject"
 
-            // let expected =
-            //     { Name = "Nested"
-            //       Properties =
-            //         [ { Name = "values"
-            //             Optional = true
-            //             FSharpType =
-            //               FSharpList(
-            //                   FSharpList(
-            //                       FSharpClass
-            //                           { Name = "valuesObj"
-            //                             Properties =
-            //                               [ { Name = "propA"
-            //                                   Optional = true
-            //                                   FSharpType = FSharpInt }
-            //                                 { Name = "propB"
-            //                                   Optional = true
-            //                                   FSharpType = FSharpString } ] }
-            //                   )
-            //               ) } ] }
+            let expected =
+                { Structure = FSharpClass { Name = "FlatObject"; Enclosing = [] }
+                  Classes =
+                    [ { Name = { Name = "FlatObject"; Enclosing = [] }
+                        Properties =
+                          [ { Name = "X"
+                              Optional = true
+                              FSharpType = FSharpString }
+                            { Name = "Y"
+                              Optional = true
+                              FSharpType = FSharpString }
+                            { Name = "Z"
+                              Optional = true
+                              FSharpType = FSharpInt } ] } ] }
 
-            // Expect.equal actual expected ""
-            printfn "%O" actual
+            Expect.equal actual expected ""
+        }
+
+    let nestedArrayWithObjectItemsShouldLeadToTwoClasses =
+        test "NestedArrayWithObjectItems should lead to two classes" {
+            let actual =
+                parseJsonSchema nestedArrayWithObjectItems
+                |> jsonObjToFSharpRep "NestedArrayWithObjectItems"
+
+            let expected =
+                { Structure =
+                    FSharpClass
+                        { Name = "NestedArrayWithObjectItems"
+                          Enclosing = [] }
+                  Classes =
+                    [ { Name =
+                          { Name = "NestedArrayWithObjectItems"
+                            Enclosing = [] }
+                        Properties =
+                          [ { Name = "values"
+                              Optional = true
+                              FSharpType =
+                                FSharpList(
+                                    FSharpList(
+                                        FSharpClass
+                                            { Name = "values"
+                                              Enclosing = [ "NestedArrayWithObjectItems" ] }
+                                    )
+                                ) } ] }
+                      { Name =
+                          { Name = "values"
+                            Enclosing = [ "NestedArrayWithObjectItems" ] }
+                        Properties =
+                          [ { Name = "propA"
+                              Optional = true
+                              FSharpType = FSharpInt }
+                            { Name = "propB"
+                              Optional = true
+                              FSharpType = FSharpString } ] } ] }
+
+            Expect.equal actual expected ""
+        }
+
+    let nestedObjectsShouldLeadToFourClasses =
+        test "NestedObjects should lead to four classes" {
+            let actual = parseJsonSchema nestedObjects |> jsonObjToFSharpRep "NestedObjects"
+
+            let expected =
+                { Structure =
+                    FSharpClass
+                        { Name = "NestedObjects"
+                          Enclosing = [] }
+                  Classes =
+                    [ { Name =
+                          { Name = "NestedObjects"
+                            Enclosing = [] }
+                        Properties =
+                          [ { Name = "header"
+                              Optional = true
+                              FSharpType =
+                                FSharpClass
+                                    { Name = "header"
+                                      Enclosing = [ "NestedObjects" ] } }
+                            { Name = "body"
+                              Optional = false
+                              FSharpType =
+                                FSharpClass
+                                    { Name = "body"
+                                      Enclosing = [ "NestedObjects" ] } } ] }
+                      { Name =
+                          { Name = "header"
+                            Enclosing = [ "NestedObjects" ] }
+                        Properties =
+                          [ { Name = "id"
+                              Optional = false
+                              FSharpType = FSharpInt }
+                            { Name = "sender"
+                              Optional = false
+                              FSharpType = FSharpString }
+                            { Name = "resend"
+                              Optional = true
+                              FSharpType = FSharpBool }
+                            { Name = "time"
+                              Optional = true
+                              FSharpType =
+                                FSharpClass
+                                    { Name = "time"
+                                      Enclosing = [ "NestedObjects"; "header" ] } } ] }
+                      { Name =
+                          { Name = "time"
+                            Enclosing = [ "NestedObjects"; "header" ] }
+                        Properties =
+                          [ { Name = "hour"
+                              Optional = false
+                              FSharpType = FSharpInt }
+                            { Name = "minute"
+                              Optional = false
+                              FSharpType = FSharpInt }
+                            { Name = "second"
+                              Optional = false
+                              FSharpType = FSharpInt } ] }
+                      { Name =
+                          { Name = "body"
+                            Enclosing = [ "NestedObjects" ] }
+                        Properties =
+                          [ { Name = "length"
+                              Optional = false
+                              FSharpType = FSharpInt }
+                            { Name = "payload"
+                              Optional = false
+                              FSharpType = FSharpString } ] } ] }
+
+            Expect.equal actual expected ""
         }
 
     [<Tests>]
-    let tests = testList "JsonSP.Tests" [ test1; test2 ]
+    let tests =
+        testList
+            "JsonSP.Tests"
+            [ nestedArrayWithObjectItemsShouldBeParsedCorrectly
+              flatObjectShouldLeadToOneClass
+              nestedArrayWithObjectItemsShouldLeadToTwoClasses
+              nestedObjectsShouldLeadToFourClasses ]
