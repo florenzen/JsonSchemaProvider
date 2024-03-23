@@ -27,7 +27,6 @@ open System.IO
 open System.Reflection
 open FSharp.Core.CompilerServices
 open ProviderImplementation.ProvidedTypes
-open NJsonSchema
 open JsonSchemaProvider
 
 [<TypeProvider>]
@@ -48,7 +47,7 @@ type JsonSPImpl(config: TypeProviderConfig) as this =
 
     let runtimeType = typeof<NullableJsonValue>
 
-    let jsonSchemaTy =
+    let jsonSchemaType =
         ProvidedTypeDefinition(thisAssembly, namespaceName, "JsonSP", baseType = Some runtimeType)
 
     let instantiate (typeName: string) (parameterValues: obj[]) =
@@ -66,16 +65,13 @@ type JsonSPImpl(config: TypeProviderConfig) as this =
             let schema = SchemaCache.parseSchema schemaString
             let schemaHashCode = schemaString.GetHashCode()
 
-            if schema.Type <> JsonObjectType.Object then
-                failwith "Only object supported"
-
             let providedType =
-                TypeProvider.run schema thisAssembly namespaceName typeName runtimeType
+                TypeProvider.run schema schemaHashCode thisAssembly namespaceName typeName runtimeType
 
             providedType
-        | paramValues -> failwithf "Unexpected parameter values %O" paramValues
+        | paramValues -> failwithf "Unexpected parameter values %A" paramValues
 
     do
-        jsonSchemaTy.DefineStaticParameters(parameters = staticParams, instantiationFunction = instantiate)
+        jsonSchemaType.DefineStaticParameters(parameters = staticParams, instantiationFunction = instantiate)
 
-        this.AddNamespace(namespaceName, [ jsonSchemaTy ])
+        this.AddNamespace(namespaceName, [ jsonSchemaType ])

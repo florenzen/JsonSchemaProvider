@@ -27,20 +27,30 @@ module TypeProvider =
     open System
     open System.Reflection
     open SchemaRep
+    open ProviderImplementation.ProvidedTypes
+    open NJsonSchema
 
     type ProvidedTypeData =
         { Assembly: Assembly
           NamespaceName: string
           RuntimeType: Type }
 
+    let run
+        (schema: JsonSchema)
+        (schemaHashCode: int32)
+        (assembly: Assembly)
+        (namespaceName: string)
+        (typeName: string)
+        (runtimeType: Type)
+        : ProvidedTypeDefinition =
+        let providedTypeData =
+            { Assembly = assembly
+              NamespaceName = namespaceName
+              RuntimeType = runtimeType }
 
-    // let rec fSharpToDotNetType (name: (fSharpType: FSharpType): Type=
-    //     match fSharpType with
-    //     | JsonObject(jsonObj)
-    //     | JsonString -> typeof<string>
+        let jsonObj = parseJsonSchemaStructured schema
+        let fSharpRep = jsonObjToFSharpRep typeName jsonObj
+        
+        let providedType = ProvidedTypeDefinition(assembly, namespaceName, typeName, Some runtimeType)
 
-    let run schema (assembly: Assembly) (namespaceName: string) (typeName: string) (runtimeType: Type) =
-        // let providedTypeData = {Assembly: assembly; NamespaceName=namespaceName;RuntimeType=runtimeType}
-        // let jsonObj = parseJsonSchemaStructured schema
-        // let fsharpType = transformJsonObjToFSharpType jsonObj
-        failwith ""
+        providedType
