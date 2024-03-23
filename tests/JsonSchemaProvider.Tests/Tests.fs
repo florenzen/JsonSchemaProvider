@@ -206,23 +206,23 @@ module Tests =
     //         let numArray = IntegerArray.Create([ 11; 12; 10; 13 ])
     //         test "select from integer array should yield input value" { Expect.equal numArray.values[1] 12 "numArray.values[1] = 12" }
 
-    [<Literal>]
-    let nestedArray =
-        """{
-      "type": "object",
-      "properties": {
-        "values": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": {"type": "string"}
-          }
-        }
-      },
-      "required": ["values"]
-    }"""
+    // [<Literal>]
+    // let nestedArray =
+    //     """{
+    //   "type": "object",
+    //   "properties": {
+    //     "values": {
+    //       "type": "array",
+    //       "items": {
+    //         "type": "array",
+    //         "items": {"type": "string"}
+    //       }
+    //     }
+    //   },
+    //   "required": ["values"]
+    // }"""
 
-    type NestedArray = JsonSchemaProvider<schema=nestedArray>
+    // type NestedArray = JsonSchemaProvider<schema=nestedArray>
 
     // let selectFromIntegerArrayShouldYieldInputValue =
     //     let nestArray = NestedArray.Create([ [ "a"; "b" ] ])

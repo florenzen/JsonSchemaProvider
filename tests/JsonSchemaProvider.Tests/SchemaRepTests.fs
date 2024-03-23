@@ -77,5 +77,34 @@ module SchemaRepTests =
 
         }
 
+    let test2 =
+        test "test2" {
+            let actual = parseJsonSchema nestedArrayWithObjectItems
+            // |> transformJsonObjToFSharpType "Nested"
+
+            // let expected =
+            //     { Name = "Nested"
+            //       Properties =
+            //         [ { Name = "values"
+            //             Optional = true
+            //             FSharpType =
+            //               FSharpList(
+            //                   FSharpList(
+            //                       FSharpClass
+            //                           { Name = "valuesObj"
+            //                             Properties =
+            //                               [ { Name = "propA"
+            //                                   Optional = true
+            //                                   FSharpType = FSharpInt }
+            //                                 { Name = "propB"
+            //                                   Optional = true
+            //                                   FSharpType = FSharpString } ] }
+            //                   )
+            //               ) } ] }
+
+            // Expect.equal actual expected ""
+            printfn "%O" actual
+        }
+
     [<Tests>]
-    let tests = testList "JsonSP.Tests" [ test1 ]
+    let tests = testList "JsonSP.Tests" [ test1; test2 ]
