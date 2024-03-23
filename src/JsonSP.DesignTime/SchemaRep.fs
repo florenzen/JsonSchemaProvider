@@ -113,7 +113,7 @@ module SchemaRep =
         { Structure: FSharpType
           Classes: FSharpClassType list }
 
-    let rec jsonPropertyToFSharpProperty
+    let rec private jsonPropertyToFSharpProperty
         (fSharpClassName: FSharpClassName)
         (jsonProperty: JsonProperty)
         : FSharpProperty * FSharpClassType list =
@@ -128,7 +128,7 @@ module SchemaRep =
 
         (fSharpProperty, classes)
 
-    and jsonSchemaTypeToFSharpRep
+    and private jsonSchemaTypeToFSharpRep
         ({ Name = name; Enclosing = enclosing } as fSharpClassName)
         (jsonSchemType: JsonSchemaType)
         : FSharpRep =
@@ -138,7 +138,7 @@ module SchemaRep =
                 [ for property in properties ->
                       jsonPropertyToFSharpProperty
                           { Name = property.Name
-                            Enclosing = name :: enclosing }
+                            Enclosing = enclosing @ [ name ] }
                           property ]
 
             let (properties, innerClasses) = List.unzip fSharpPropertiesAndClasses
@@ -171,112 +171,3 @@ module SchemaRep =
             { Name = providedTypeName
               Enclosing = [] }
             (JsonObject(jsonObj))
-// let rec private jsonToFSharpProperty
-//     (enclosing: string option)
-//     ({ Name = name
-//        Optional = optional
-//        PropertyType = propertyType }: JsonProperty)
-//     : FSharpProperty * FSharpClassType list =
-//     let (fsType, classes) = jsonToFSharpType name enclosing propertyType
-
-//     ({ Name = name
-//        Optional = optional
-//        FSharpType = fsType },
-//      classes)
-
-// and private jsonObjToFSharpType (name: string) (JsonObj(jsonProperties): JsonObj) : FSharpClassType list =
-//     let fsPropertiesAndClasses =
-//         jsonProperties |> List.map (jsonToFSharpProperty (Some(name)))
-
-//     let (fsProperties, classes) = List.unzip fsPropertiesAndClasses
-
-//     { Name = name
-//       Properties = fsProperties }
-//     :: List.concat classes
-
-// and private jsonToFSharpType
-//     (enclosing: string list)
-//     (jsonType: JsonSchemaType)
-//     : FSharpType * FSharpClassType list =
-//     match jsonType with
-//     | JsonObject(jsonObj) -> (FSharpClass({Name:name, enclosing), (jsonObjToFSharpType name jsonObj))
-//     | JsonArray(elemType) ->
-//         let (fsType, classes) = jsonToFSharpType name enclosing elemType
-//         (FSharpList(fsType), classes)
-//     | JsonBoolean -> (FSharpBool, [])
-//     | JsonInteger -> (FSharpInt, [])
-//     | JsonNumber -> (FSharpDouble, [])
-//     | JsonString -> (FSharpString, [])
-
-// let transformJsonObjToFSharpType (name: string) (jsonObj: JsonObj) = jsonObjToFSharpType name jsonObj
-
-module TypeProvider =
-    open SchemaRep
-
-    type ProvidedTypeData =
-        { Assembly: Assembly
-          NamespaceName: string
-          RuntimeType: Type }
-
-
-    // let rec fSharpToDotNetType (name: (fSharpType: FSharpType): Type=
-    //     match fSharpType with
-    //     | JsonObject(jsonObj)
-    //     | JsonString -> typeof<string>
-
-    let run schema (assembly: Assembly) (namespaceName: string) (typeName: string) (runtimeType: Type) =
-        // let providedTypeData = {Assembly: assembly; NamespaceName=namespaceName;RuntimeType=runtimeType}
-        // let jsonObj = parseJsonSchemaStructured schema
-        // let fsharpType = transformJsonObjToFSharpType jsonObj
-        failwith ""
-
-
-[<TypeProvider>]
-type JsonSPImpl(config: TypeProviderConfig) as this =
-    inherit
-        TypeProviderForNamespaces(
-            config,
-            assemblyReplacementMap = [ ("JsonSP.DesignTime", "JsonSchemaProvider.Runtime") ],
-            addDefaultProbingLocation = true
-        )
-
-    let namespaceName = "JsonSP"
-    let thisAssembly = Assembly.GetExecutingAssembly()
-
-    let staticParams =
-        [ ProvidedStaticParameter("schema", typeof<string>, "")
-          ProvidedStaticParameter("schemaFile", typeof<string>, "") ]
-
-    let runtimeType = typeof<NullableJsonValue>
-
-    let jsonSchemaTy =
-        ProvidedTypeDefinition(thisAssembly, namespaceName, "JsonSP", baseType = Some runtimeType)
-
-    let instantiate (typeName: string) (parameterValues: obj[]) =
-        match parameterValues with
-        | [| :? string as schemaSource; :? string as schemaFile |] ->
-            if schemaSource = "" && schemaFile = "" || schemaSource <> "" && schemaFile <> "" then
-                failwith "Only one of schema or schemaFile must be set."
-
-            let schemaString =
-                if schemaSource <> "" then
-                    schemaSource
-                else
-                    File.ReadAllText(schemaFile)
-
-            let schema = SchemaCache.parseSchema schemaString
-            let schemaHashCode = schemaString.GetHashCode()
-
-            if schema.Type <> JsonObjectType.Object then
-                failwith "Only object supported"
-
-            let providedType =
-                TypeProvider.run schema thisAssembly namespaceName typeName runtimeType
-
-            providedType
-        | paramValues -> failwithf "Unexpected parameter values %O" paramValues
-
-    do
-        jsonSchemaTy.DefineStaticParameters(parameters = staticParams, instantiationFunction = instantiate)
-
-        this.AddNamespace(namespaceName, [ jsonSchemaTy ])
