@@ -48,9 +48,9 @@ module TypeProvider =
               NamespaceName = namespaceName
               RuntimeType = runtimeType }
 
-        let jsonObj = parseJsonSchemaStructured schema
-        let fSharpRep = jsonObjToFSharpRep typeName jsonObj
-        
-        let providedType = ProvidedTypeDefinition(assembly, namespaceName, typeName, Some runtimeType)
+        let fSharpRep = parseJsonSchemaStructured schema |> jsonObjToFSharpRep typeName
+
+        let providedType =
+            ProvidedTypeDefinition(assembly, namespaceName, typeName, Some runtimeType)
 
         providedType
