@@ -179,4 +179,4 @@ module TypeProvider =
             parseJsonSchemaStructured schema |> jsonObjectToFSharpClassTree typeName
 
         fSharpClassTreeToProvidedTypeDefinition providedTypeData fSharpClassTree
-        // TODO: parse method
+// TODO: parse method
