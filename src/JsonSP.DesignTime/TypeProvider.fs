@@ -30,15 +30,137 @@ module TypeProvider =
     open ProviderImplementation.ProvidedTypes
     open NJsonSchema
 
-    type ProvidedTypeData =
+    type private ProvidedTypeData =
         { Assembly: Assembly
           NamespaceName: string
           RuntimeType: Type }
 
-    type ClassTree =
-        { Name: string
-          Properties: FSharpProperty list
-          SubClasses: ClassTree list }
+    let rec private fSharpTypeToDotnetType
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (fSharpType: FSharpType)
+        : Type =
+        match fSharpType with
+        | FSharpBool -> typeof<bool>
+        | FSharpClass(name) -> classMap[name]
+        | FSharpList(innerFSharpType) ->
+            let innerDotnetType = fSharpTypeToDotnetType classMap innerFSharpType
+            typedefof<_ list>.MakeGenericType(innerDotnetType)
+        | FSharpDouble -> typeof<double>
+        | FSharpInt -> typeof<int>
+        | FSharpString -> typeof<string>
+
+    let private optionalOrPlainType (optional: bool) (dotnetType: Type) : Type =
+        if optional then
+            typedefof<_ option>.MakeGenericType(dotnetType)
+        else
+            dotnetType
+
+    let rec private fSharpTypeToPropertyType
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (optional: bool)
+        (fSharpType: FSharpType)
+        : Type =
+        let dotnetType = fSharpTypeToDotnetType classMap fSharpType
+        optionalOrPlainType optional dotnetType
+
+    let private nullableOrPlainType (optional: bool) (dotnetType: Type) : Type =
+        if optional then
+            let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
+
+            if dotnetTypeWithoutOption.IsValueType then
+                typedefof<Nullable<_>>.MakeGenericType(dotnetTypeWithoutOption) //, Some(Nullable() :> obj))
+            else
+                dotnetTypeWithoutOption //, Some(null :> obj)
+        else
+            dotnetType
+
+    let private defaultValueForNullableType (dotnetType: Type) : obj =
+        let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
+
+        if dotnetTypeWithoutOption.IsValueType then
+            Nullable()
+        else
+            null
+
+    let rec private fSharpTypeToMethodParameterType
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (optional: bool)
+        (fSharpType: FSharpType)
+        : Type =
+        let dotnetType = fSharpTypeToDotnetType classMap fSharpType
+        nullableOrPlainType optional dotnetType
+
+    let private createProvidedProperties
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (properties: FSharpProperty list)
+        : ProvidedProperty list =
+        [ for { Name = name
+                Optional = optional
+                FSharpType = fSharpType } in properties ->
+
+              ProvidedProperty(
+                  name,
+                  fSharpTypeToPropertyType classMap optional fSharpType,
+                  ?getterCode = None // TODO
+              ) ]
+
+    let private createProvidedCreateMethod
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (properties: FSharpProperty list)
+        (providedTypeDefinition: ProvidedTypeDefinition)
+        : ProvidedMethod =
+        let parameters =
+            [ for property in properties do
+                  let parameterType =
+                      fSharpTypeToMethodParameterType classMap (property.Optional) property.FSharpType
+
+                  if property.Optional then
+                      ProvidedParameter(property.Name, parameterType, false, defaultValueForNullableType parameterType)
+                  else
+                      ProvidedParameter(property.Name, parameterType) ]
+
+        ProvidedMethod("Create", parameters, providedTypeDefinition, ?invokeCode = None)
+
+    let rec private createSubClassProvidedTypeDefinitions
+        (providedTypeData: ProvidedTypeData)
+        (subClasses: FSharpClassTree list)
+        : Map<string, ProvidedTypeDefinition> =
+        subClasses
+        |> List.map (fun subClass -> (subClass.Name, fSharpClassTreeToProvidedTypeDefinition providedTypeData subClass))
+        |> Map.ofList
+
+    and private fSharpClassTreeToProvidedTypeDefinition
+        (providedTypeData: ProvidedTypeData)
+        { Name = className
+          Properties = properties
+          SubClasses = subClasses }
+        : ProvidedTypeDefinition =
+        let providedTypeDefinition =
+            ProvidedTypeDefinition(
+                providedTypeData.Assembly,
+                providedTypeData.NamespaceName,
+                className,
+                Some(providedTypeData.RuntimeType)
+            )
+
+        let classMap = createSubClassProvidedTypeDefinitions providedTypeData subClasses
+
+        classMap
+        |> Map.values
+        |> Seq.iter (fun subClassProvidedTypeDefinition ->
+            providedTypeDefinition.AddMember(subClassProvidedTypeDefinition))
+
+        let providedProperties = createProvidedProperties classMap properties
+
+        providedProperties
+        |> List.iter (fun providedProperty -> providedTypeDefinition.AddMember(providedProperty))
+
+        let createMethod =
+            createProvidedCreateMethod classMap properties providedTypeDefinition
+
+        providedTypeDefinition.AddMember(createMethod)
+
+        providedTypeDefinition
 
     let run
         (schema: JsonSchema)
@@ -53,11 +175,8 @@ module TypeProvider =
               NamespaceName = namespaceName
               RuntimeType = runtimeType }
 
-        let fSharpRep =
-            parseJsonSchemaStructured schema
-            |> jsonSchemaTypeToFSharpRepForProvidedName typeName
+        let fSharpClassTree =
+            parseJsonSchemaStructured schema |> jsonObjectToFSharpClassTree typeName
 
-        let providedType =
-            ProvidedTypeDefinition(assembly, namespaceName, typeName, Some runtimeType)
-
-        providedType
+        fSharpClassTreeToProvidedTypeDefinition providedTypeData fSharpClassTree
+        // TODO: parse method
