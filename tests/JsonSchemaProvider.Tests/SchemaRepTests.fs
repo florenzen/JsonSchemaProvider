@@ -318,6 +318,32 @@ module SchemaRepTests =
             Expect.equal actual expected ""
         }
 
+    let nestedArrayWithObjectItemsShouldBeClassTreeWithTwoClasses =
+        test "NestedArrayWithObjectItems should be vlass tree with two classes" {
+            let actual =
+                parseJsonSchema nestedArrayWithObjectItems
+                |> jsonObjectToFSharpClassTree "NestedArrayWithObjectItems"
+
+            let expected =
+                { Name = "NestedArrayWithObjectItems"
+                  Properties =
+                    [ { Name = "values"
+                        Optional = true
+                        FSharpType = FSharpList(FSharpList(FSharpClass { Name = "values"; Enclosing = [] })) } ]
+                  SubClasses =
+                    [ { Name = "values"
+                        Properties =
+                          [ { Name = "propA"
+                              Optional = true
+                              FSharpType = FSharpInt }
+                            { Name = "propB"
+                              Optional = true
+                              FSharpType = FSharpString } ]
+                        SubClasses = [] } ] }
+
+            Expect.equal actual expected ""
+        }
+
     [<Tests>]
     let tests =
         testList
@@ -325,5 +351,6 @@ module SchemaRepTests =
             [ nestedArrayWithObjectItemsShouldBeParsedCorrectly
               flatObjectShouldLeadToOneClass
               nestedArrayWithObjectItemsShouldLeadToTwoClasses
+              nestedArrayWithObjectItemsShouldBeClassTreeWithTwoClasses
               nestedObjectsShouldLeadToFourClasses
               nestedObjectsShouldBeClassTreeWithFourClasses ]
