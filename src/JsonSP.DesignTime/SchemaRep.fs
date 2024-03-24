@@ -169,8 +169,7 @@ module SchemaRep =
         : FSharpType * FSharpClassTree option =
         match jsonSchemaType with
         | JsonBoolean -> (FSharpBool, None)
-        | JsonObject(properties) ->
-            (FSharpClass(lhsName), Some(jsonPropertyListToFSharpClassTree lhsName properties))
+        | JsonObject(properties) -> (FSharpClass(lhsName), Some(jsonPropertyListToFSharpClassTree lhsName properties))
         | JsonArray(innerType) ->
             let (innerFSharpType, maybeClass) =
                 jsonSchemaTypeToFSharpTypeAndSubClass lhsName innerType
