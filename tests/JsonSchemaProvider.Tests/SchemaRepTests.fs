@@ -102,20 +102,20 @@ module SchemaRepTests =
             let actual = parseJsonSchema nestedArrayWithObjectItems
 
             let expected =
-                JsonObj(
+                JsonObject(
                     [ { Name = "values"
                         Optional = true
                         PropertyType =
                           JsonArray(
                               JsonArray(
                                   JsonObject(
-                                      JsonObj
-                                          [ { Name = "propA"
-                                              Optional = true
-                                              PropertyType = JsonInteger }
-                                            { Name = "propB"
-                                              Optional = true
-                                              PropertyType = JsonString } ]
+
+                                      [ { Name = "propA"
+                                          Optional = true
+                                          PropertyType = JsonInteger }
+                                        { Name = "propB"
+                                          Optional = true
+                                          PropertyType = JsonString } ]
                                   )
                               )
                           ) } ]
@@ -127,7 +127,9 @@ module SchemaRepTests =
 
     let flatObjectShouldLeadToOneClass =
         test "FlatObject should lead to one class" {
-            let actual = parseJsonSchema flatObject |> jsonObjToFSharpRep "FlatObject"
+            let actual =
+                parseJsonSchema flatObject
+                |> jsonSchemaTypeToFSharpRepForProvidedName "FlatObject"
 
             let expected =
                 { Structure = FSharpClass { Name = "FlatObject"; Enclosing = [] }
@@ -151,7 +153,7 @@ module SchemaRepTests =
         test "NestedArrayWithObjectItems should lead to two classes" {
             let actual =
                 parseJsonSchema nestedArrayWithObjectItems
-                |> jsonObjToFSharpRep "NestedArrayWithObjectItems"
+                |> jsonSchemaTypeToFSharpRepForProvidedName "NestedArrayWithObjectItems"
 
             let expected =
                 { Structure =
@@ -189,7 +191,9 @@ module SchemaRepTests =
 
     let nestedObjectsShouldLeadToFourClasses =
         test "NestedObjects should lead to four classes" {
-            let actual = parseJsonSchema nestedObjects |> jsonObjToFSharpRep "NestedObjects"
+            let actual =
+                parseJsonSchema nestedObjects
+                |> jsonSchemaTypeToFSharpRepForProvidedName "NestedObjects"
 
             let expected =
                 { Structure =

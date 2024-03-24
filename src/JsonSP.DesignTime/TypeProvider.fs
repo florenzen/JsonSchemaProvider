@@ -35,6 +35,11 @@ module TypeProvider =
           NamespaceName: string
           RuntimeType: Type }
 
+    type ClassTree =
+        { Name: string
+          Properties: FSharpProperty list
+          SubClasses: ClassTree list }
+
     let run
         (schema: JsonSchema)
         (schemaHashCode: int32)
@@ -48,7 +53,7 @@ module TypeProvider =
               NamespaceName = namespaceName
               RuntimeType = runtimeType }
 
-        let fSharpRep = parseJsonSchemaStructured schema |> jsonObjToFSharpRep typeName
+        let fSharpRep = parseJsonSchemaStructured schema |> jsonSchemaTypeToFSharpRepForProvidedName typeName
 
         let providedType =
             ProvidedTypeDefinition(assembly, namespaceName, typeName, Some runtimeType)
