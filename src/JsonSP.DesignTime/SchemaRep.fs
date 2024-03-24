@@ -164,16 +164,16 @@ module SchemaRep =
          maybeClass)
 
     and private jsonSchemaTypeToFSharpTypeAndSubClass
-        (propertyName: string)
+        (lhsName: string)
         (jsonSchemaType: JsonSchemaType)
         : FSharpType * FSharpClassTree option =
         match jsonSchemaType with
         | JsonBoolean -> (FSharpBool, None)
         | JsonObject(properties) ->
-            (FSharpClass(propertyName), Some(jsonPropertyListToFSharpClassTree propertyName properties))
+            (FSharpClass(lhsName), Some(jsonPropertyListToFSharpClassTree lhsName properties))
         | JsonArray(innerType) ->
             let (innerFSharpType, maybeClass) =
-                jsonSchemaTypeToFSharpTypeAndSubClass propertyName innerType
+                jsonSchemaTypeToFSharpTypeAndSubClass lhsName innerType
 
             (FSharpList(innerFSharpType), maybeClass)
         | JsonInteger -> (FSharpInt, None)
@@ -203,19 +203,22 @@ module SchemaRep =
     //       Properties = properties
     //       SubClasses = subClasses }
 
-    and private jsonPropertyListToFSharpClassTree (name: string) (jsonProperties: JsonProperty list) : FSharpClassTree =
+    and private jsonPropertyListToFSharpClassTree
+        (lhsName: string)
+        (jsonProperties: JsonProperty list)
+        : FSharpClassTree =
         let (fSharpProperties, maybeSubClasses) =
             jsonProperties |> List.map jsonPropertyToFSharpPropertyAndSubClass |> List.unzip
 
         let subClasses = maybeSubClasses |> List.map Option.toList |> List.concat
 
-        { Name = name
+        { Name = lhsName
           Properties = fSharpProperties
           SubClasses = subClasses }
 
-    let jsonObjectToFSharpClassTree (name: string) (jsonSchemaType: JsonSchemaType) : FSharpClassTree =
+    let jsonObjectToFSharpClassTree (lhsName: string) (jsonSchemaType: JsonSchemaType) : FSharpClassTree =
         match jsonSchemaType with
-        | JsonObject(properties) -> jsonPropertyListToFSharpClassTree name properties
+        | JsonObject(properties) -> jsonPropertyListToFSharpClassTree lhsName properties
         | _ -> failwith "Only object type supported"
 
     // let rec jsonSchemaTypeToFSharpTypeAndSubClass (fSharpClassName: FSharpClassName) (jsonSchemaType: JsonSchemaType): FSharpType * FSharpClassTree option =
