@@ -32,10 +32,8 @@ module SchemaRep =
           Optional: bool
           PropertyType: JsonSchemaType }
 
-    and JsonObj = JsonObj of JsonProperty list
-
     and JsonSchemaType =
-        | JsonObject of JsonObj
+        | JsonObject of JsonProperty list
         | JsonArray of JsonSchemaType
         | JsonBoolean
         | JsonInteger
@@ -52,7 +50,6 @@ module SchemaRep =
               Optional = isOptional (pair.Key)
               PropertyType = parseType pair.Value })
         |> Seq.toList
-        |> JsonObj
         |> JsonObject
 
     and private parseArray (schema: JsonSchema) : JsonSchemaType = parseType schema.Item |> JsonArray
@@ -67,15 +64,13 @@ module SchemaRep =
         | JsonObjectType.String -> JsonString
         | _ -> failwithf "Unsupported JSON object type %O" schema.Type
 
-    let parseJsonSchemaStructured (schema: JsonSchema) : JsonObj =
+    let parseJsonSchemaStructured (schema: JsonSchema) : JsonSchemaType =
         if schema.Type <> JsonObjectType.Object then
             failwith "Only object supported"
 
-        match parseType schema with
-        | JsonObject jsonObj -> jsonObj
-        | _ -> failwith "cannot happen"
+        parseType schema
 
-    let parseJsonSchema (input: string) : JsonObj =
+    let parseJsonSchema (input: string) : JsonSchemaType =
         let schema = SchemaCache.parseSchema input
         parseJsonSchemaStructured schema
 
@@ -90,18 +85,63 @@ module SchemaRep =
         | FSharpString
         | FSharpBool
 
-    type FSharpClassType =
-        { Name: FSharpClassName
-          Properties: FSharpProperty list }
-
-    and FSharpProperty =
+    type FSharpProperty =
         { Name: string
           Optional: bool
           FSharpType: FSharpType }
 
+    type FSharpClassType =
+        { Name: FSharpClassName
+          Properties: FSharpProperty list }
+
     type FSharpRep =
         { Structure: FSharpType
           Classes: FSharpClassType list }
+
+    type FSharpClassTree =
+        { Name: string
+          Properties: FSharpProperty list
+          SubClasses: FSharpClassTree list }
+
+    // let jsonPropertyToFSharpPropertyAndSubClasses
+    //     (name: FSharpClassName)
+    //     ({ Name = propertyName
+    //        Optional = optional
+    //        PropertyType = propertyType }: JsonProperty)
+    //     : FSharpProperty * FSharpClassTree option =
+    //     let (fSharpType, maybeClass) =
+    //         match propertyType with
+    //         | JsonBoolean -> (FSharpBool, None)
+    //         | JsonObject(JsonObj(properties)) -> failwith "Not Implemented"
+    //         | JsonArray(jsonSchemaType) ->
+    //             let
+    //         | JsonInteger -> (FSharpInt, None)
+    //         | JsonNumber -> (FSharpDouble, None)
+    //         | JsonString -> (FSharpString, None)
+
+    //     ({ Name = propertyName
+    //        Optional = optional
+    //        FSharpType = fSharpType },
+    //      maybeClass)
+
+    // let jsonPropertiesToFSharpPropertiesAndSubClasses
+    //     (name: FSharpClassName)
+    //     (jsonSchemaProperties: JsonProperty list)
+    //     : FSharpProperty list * FSharpClassTree list =
+    //     // let x = jsonSchemaProperties |> List.map jsonPropertyToFSharpPropertyAndSubClasses
+    //     // let classes =
+    //     failwith ""
+
+    // let jsonObjToFSharpClassTree (providedTypeName: string) (JsonObj(properties): JsonObj) : FSharpClassTree =
+    //     let (properties, subClasses) =
+    //         jsonPropertiesToFSharpPropertiesAndSubClasses
+    //             { Name = providedTypeName
+    //               Enclosing = [] }
+    //             properties
+
+    //     { Name = providedTypeName
+    //       Properties = properties
+    //       SubClasses = subClasses }
 
     let rec private jsonPropertyToFSharpProperty
         (fSharpClassName: FSharpClassName)
@@ -120,10 +160,10 @@ module SchemaRep =
 
     and private jsonSchemaTypeToFSharpRep
         ({ Name = name; Enclosing = enclosing } as fSharpClassName)
-        (jsonSchemType: JsonSchemaType)
+        (jsonSchemaType: JsonSchemaType)
         : FSharpRep =
-        match jsonSchemType with
-        | JsonObject(JsonObj(properties)) ->
+        match jsonSchemaType with
+        | JsonObject(properties) ->
             let fSharpPropertiesAndClasses =
                 [ for property in properties ->
                       jsonPropertyToFSharpProperty
@@ -156,8 +196,11 @@ module SchemaRep =
             { Structure = FSharpString
               Classes = [] }
 
-    let jsonObjToFSharpRep (providedTypeName: string) (jsonObj: JsonObj) : FSharpRep =
+    let jsonSchemaTypeToFSharpRepForProvidedName
+        (providedTypeName: string)
+        (jsonSchemaType: JsonSchemaType)
+        : FSharpRep =
         jsonSchemaTypeToFSharpRep
             { Name = providedTypeName
               Enclosing = [] }
-            (JsonObject(jsonObj))
+            jsonSchemaType
