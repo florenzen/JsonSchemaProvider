@@ -103,22 +103,95 @@ module SchemaRep =
           Properties: FSharpProperty list
           SubClasses: FSharpClassTree list }
 
-    // let jsonPropertyToFSharpPropertyAndSubClasses
-    //     (name: FSharpClassName)
-    //     ({ Name = propertyName
-    //        Optional = optional
-    //        PropertyType = propertyType }: JsonProperty)
-    //     : FSharpProperty * FSharpClassTree option =
-    //     let (fSharpType, maybeClass) =
-    //         match propertyType with
-    //         | JsonBoolean -> (FSharpBool, None)
-    //         | JsonObject(JsonObj(properties)) -> failwith "Not Implemented"
-    //         | JsonArray(jsonSchemaType) ->
-    //             let
-    //         | JsonInteger -> (FSharpInt, None)
-    //         | JsonNumber -> (FSharpDouble, None)
-    //         | JsonString -> (FSharpString, None)
+    let nestedObjects =
+        { Name = "NestedObjects"
+          Properties =
+            [ { Name = "header"
+                Optional = true
+                FSharpType =
+                  FSharpClass(
+                      { Name = "header"
+                        Enclosing = [ "NestedObjects" ] }
+                  ) }
+              { Name = "body"
+                Optional = false
+                FSharpType =
+                  FSharpClass(
+                      { Name = "body"
+                        Enclosing = [ "NestedObjects" ] }
+                  ) } ]
+          SubClasses =
+            [ { Name = "header"
+                Properties =
+                  [ { Name = "id"
+                      Optional = false
+                      FSharpType = FSharpInt }
+                    { Name = "sender"
+                      Optional = false
+                      FSharpType = FSharpString }
+                    { Name = "resend"
+                      Optional = true
+                      FSharpType = FSharpBool }
+                    { Name = "time"
+                      Optional = true
+                      FSharpType =
+                        FSharpClass(
+                            { Name = "time"
+                              Enclosing = [ "NestedObjects"; "header" ] }
+                        ) } ]
+                SubClasses =
+                  [ { Name = "time"
+                      Properties =
+                        [ { Name = "hour"
+                            Optional = false
+                            FSharpType = FSharpInt }
+                          { Name = "minute"
+                            Optional = false
+                            FSharpType = FSharpInt }
+                          { Name = "second"
+                            Optional = false
+                            FSharpType = FSharpInt } ]
+                      SubClasses = [] } ] }
+              { Name = "body"
+                Properties =
+                  [ { Name = "length"
+                      Optional = false
+                      FSharpType = FSharpInt }
+                    { Name = "payload"
+                      Optional = false
+                      FSharpType = FSharpString } ]
+                SubClasses = [] } ] }
 
+    let rec private jsonPropertyToFSharpPropertyAndSubClass
+        ({ Name = propertyName
+           Optional = optional
+           PropertyType = propertyType }: JsonProperty)
+        : FSharpProperty * FSharpClassTree option =
+        let (fSharpType, maybeClass) =
+            jsonSchemaTypeToFSharpTypeAndSubClass propertyName propertyType
+
+        ({ Name = propertyName
+           Optional = optional
+           FSharpType = fSharpType },
+         maybeClass)
+
+    and private jsonSchemaTypeToFSharpTypeAndSubClass
+        (propertyName: string)
+        (jsonSchemaType: JsonSchemaType)
+        : FSharpType * FSharpClassTree option =
+        match jsonSchemaType with
+        | JsonBoolean -> (FSharpBool, None)
+        | JsonObject(properties) ->
+            (FSharpClass({ Name = propertyName; Enclosing = [] }),
+             Some(jsonPropertyListToFSharpClassTree propertyName properties))
+        | JsonArray(innerType) ->
+            let (innerFSharpType, maybeClass) =
+                jsonSchemaTypeToFSharpTypeAndSubClass propertyName innerType
+
+            (FSharpList(innerFSharpType), maybeClass)
+        | JsonInteger -> (FSharpInt, None)
+        | JsonNumber -> (FSharpDouble, None)
+        | JsonString -> (FSharpString, None)
     //     ({ Name = propertyName
     //        Optional = optional
     //        FSharpType = fSharpType },
@@ -142,6 +215,32 @@ module SchemaRep =
     //     { Name = providedTypeName
     //       Properties = properties
     //       SubClasses = subClasses }
+
+    and private jsonPropertyListToFSharpClassTree (name: string) (jsonProperties: JsonProperty list) : FSharpClassTree =
+        let (fSharpProperties, maybeSubClasses) =
+            jsonProperties |> List.map jsonPropertyToFSharpPropertyAndSubClass |> List.unzip
+
+        let subClasses = maybeSubClasses |> List.map Option.toList |> List.concat
+
+        { Name = name
+          Properties = fSharpProperties
+          SubClasses = subClasses }
+
+    let jsonObjectToFSharpClassTree (name: string) (jsonSchemaType: JsonSchemaType) : FSharpClassTree =
+        match jsonSchemaType with
+        | JsonObject(properties) -> jsonPropertyListToFSharpClassTree name properties
+        | _ -> failwith "Only object type supported"
+
+    // let rec jsonSchemaTypeToFSharpTypeAndSubClass (fSharpClassName: FSharpClassName) (jsonSchemaType: JsonSchemaType): FSharpType * FSharpClassTree option =
+    //     match jsonSchemaType with
+    //     | JsonBoolean -> (FSharpBool, None)
+    //     | JsonObject(properties) -> (FSharpClass(fSharpClassName), None)
+    //     | JsonArray(innerType) ->
+    //         let (innerFSharpType, maybeClass) = jsonSchemaTypeToFSharpTypeAndSubClass fSharpClassName innerType
+    //         (FSharpList(innerFSharpType), maybeClass)
+    //     | JsonInteger -> failwith "Not Implemented"
+    //     | JsonNumber -> failwith "Not Implemented"
+    //     | JsonString -> failwith "Not Implemented"
 
     let rec private jsonPropertyToFSharpProperty
         (fSharpClassName: FSharpClassName)

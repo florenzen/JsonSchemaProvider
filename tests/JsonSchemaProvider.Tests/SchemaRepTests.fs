@@ -263,6 +263,61 @@ module SchemaRepTests =
             Expect.equal actual expected ""
         }
 
+    let nestedObjectsShouldBeClassTreeWithFourClasses =
+        test "NestedObjects should be class tree with four classes" {
+            let actual =
+                parseJsonSchema nestedObjects |> jsonObjectToFSharpClassTree "NestedObjects"
+
+            let expected =
+                { Name = "NestedObjects"
+                  Properties =
+                    [ { Name = "header"
+                        Optional = true
+                        FSharpType = FSharpClass { Name = "header"; Enclosing = [] } }
+                      { Name = "body"
+                        Optional = false
+                        FSharpType = FSharpClass { Name = "body"; Enclosing = [] } } ]
+                  SubClasses =
+                    [ { Name = "header"
+                        Properties =
+                          [ { Name = "id"
+                              Optional = false
+                              FSharpType = FSharpInt }
+                            { Name = "sender"
+                              Optional = false
+                              FSharpType = FSharpString }
+                            { Name = "resend"
+                              Optional = true
+                              FSharpType = FSharpBool }
+                            { Name = "time"
+                              Optional = true
+                              FSharpType = FSharpClass { Name = "time"; Enclosing = [] } } ]
+                        SubClasses =
+                          [ { Name = "time"
+                              Properties =
+                                [ { Name = "hour"
+                                    Optional = false
+                                    FSharpType = FSharpInt }
+                                  { Name = "minute"
+                                    Optional = false
+                                    FSharpType = FSharpInt }
+                                  { Name = "second"
+                                    Optional = false
+                                    FSharpType = FSharpInt } ]
+                              SubClasses = [] } ] }
+                      { Name = "body"
+                        Properties =
+                          [ { Name = "length"
+                              Optional = false
+                              FSharpType = FSharpInt }
+                            { Name = "payload"
+                              Optional = false
+                              FSharpType = FSharpString } ]
+                        SubClasses = [] } ] }
+
+            Expect.equal actual expected ""
+        }
+
     [<Tests>]
     let tests =
         testList
@@ -270,4 +325,5 @@ module SchemaRepTests =
             [ nestedArrayWithObjectItemsShouldBeParsedCorrectly
               flatObjectShouldLeadToOneClass
               nestedArrayWithObjectItemsShouldLeadToTwoClasses
-              nestedObjectsShouldLeadToFourClasses ]
+              nestedObjectsShouldLeadToFourClasses
+              nestedObjectsShouldBeClassTreeWithFourClasses ]
