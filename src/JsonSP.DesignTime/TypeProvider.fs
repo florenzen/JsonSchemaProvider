@@ -53,7 +53,9 @@ module TypeProvider =
               NamespaceName = namespaceName
               RuntimeType = runtimeType }
 
-        let fSharpRep = parseJsonSchemaStructured schema |> jsonSchemaTypeToFSharpRepForProvidedName typeName
+        let fSharpRep =
+            parseJsonSchemaStructured schema
+            |> jsonSchemaTypeToFSharpRepForProvidedName typeName
 
         let providedType =
             ProvidedTypeDefinition(assembly, namespaceName, typeName, Some runtimeType)
