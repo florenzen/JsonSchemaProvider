@@ -132,9 +132,9 @@ module SchemaRepTests =
                 |> jsonSchemaTypeToFSharpRepForProvidedName "FlatObject"
 
             let expected =
-                { Structure = FSharpClass { Name = "FlatObject"; Enclosing = [] }
+                { Structure = FSharpClass("FlatObject")
                   Classes =
-                    [ { Name = { Name = "FlatObject"; Enclosing = [] }
+                    [ { Name = ("FlatObject")
                         Properties =
                           [ { Name = "X"
                               Optional = true
@@ -156,28 +156,14 @@ module SchemaRepTests =
                 |> jsonSchemaTypeToFSharpRepForProvidedName "NestedArrayWithObjectItems"
 
             let expected =
-                { Structure =
-                    FSharpClass
-                        { Name = "NestedArrayWithObjectItems"
-                          Enclosing = [] }
+                { Structure = FSharpClass("NestedArrayWithObjectItems")
                   Classes =
-                    [ { Name =
-                          { Name = "NestedArrayWithObjectItems"
-                            Enclosing = [] }
+                    [ { Name = "NestedArrayWithObjectItems"
                         Properties =
                           [ { Name = "values"
                               Optional = true
-                              FSharpType =
-                                FSharpList(
-                                    FSharpList(
-                                        FSharpClass
-                                            { Name = "values"
-                                              Enclosing = [ "NestedArrayWithObjectItems" ] }
-                                    )
-                                ) } ] }
-                      { Name =
-                          { Name = "values"
-                            Enclosing = [ "NestedArrayWithObjectItems" ] }
+                              FSharpType = FSharpList(FSharpList(FSharpClass("values"))) } ] }
+                      { Name = "values"
                         Properties =
                           [ { Name = "propA"
                               Optional = true
@@ -196,30 +182,17 @@ module SchemaRepTests =
                 |> jsonSchemaTypeToFSharpRepForProvidedName "NestedObjects"
 
             let expected =
-                { Structure =
-                    FSharpClass
-                        { Name = "NestedObjects"
-                          Enclosing = [] }
+                { Structure = FSharpClass("NestedObjects")
                   Classes =
-                    [ { Name =
-                          { Name = "NestedObjects"
-                            Enclosing = [] }
+                    [ { Name = "NestedObjects"
                         Properties =
                           [ { Name = "header"
                               Optional = true
-                              FSharpType =
-                                FSharpClass
-                                    { Name = "header"
-                                      Enclosing = [ "NestedObjects" ] } }
+                              FSharpType = FSharpClass("header") }
                             { Name = "body"
                               Optional = false
-                              FSharpType =
-                                FSharpClass
-                                    { Name = "body"
-                                      Enclosing = [ "NestedObjects" ] } } ] }
-                      { Name =
-                          { Name = "header"
-                            Enclosing = [ "NestedObjects" ] }
+                              FSharpType = FSharpClass("body") } ] }
+                      { Name = "header"
                         Properties =
                           [ { Name = "id"
                               Optional = false
@@ -232,13 +205,8 @@ module SchemaRepTests =
                               FSharpType = FSharpBool }
                             { Name = "time"
                               Optional = true
-                              FSharpType =
-                                FSharpClass
-                                    { Name = "time"
-                                      Enclosing = [ "NestedObjects"; "header" ] } } ] }
-                      { Name =
-                          { Name = "time"
-                            Enclosing = [ "NestedObjects"; "header" ] }
+                              FSharpType = FSharpClass("time") } ] }
+                      { Name = "time"
                         Properties =
                           [ { Name = "hour"
                               Optional = false
@@ -249,9 +217,7 @@ module SchemaRepTests =
                             { Name = "second"
                               Optional = false
                               FSharpType = FSharpInt } ] }
-                      { Name =
-                          { Name = "body"
-                            Enclosing = [ "NestedObjects" ] }
+                      { Name = "body"
                         Properties =
                           [ { Name = "length"
                               Optional = false
@@ -273,10 +239,10 @@ module SchemaRepTests =
                   Properties =
                     [ { Name = "header"
                         Optional = true
-                        FSharpType = FSharpClass { Name = "header"; Enclosing = [] } }
+                        FSharpType = FSharpClass("header") }
                       { Name = "body"
                         Optional = false
-                        FSharpType = FSharpClass { Name = "body"; Enclosing = [] } } ]
+                        FSharpType = FSharpClass("body") } ]
                   SubClasses =
                     [ { Name = "header"
                         Properties =
@@ -291,7 +257,7 @@ module SchemaRepTests =
                               FSharpType = FSharpBool }
                             { Name = "time"
                               Optional = true
-                              FSharpType = FSharpClass { Name = "time"; Enclosing = [] } } ]
+                              FSharpType = FSharpClass("time") } ]
                         SubClasses =
                           [ { Name = "time"
                               Properties =
@@ -329,7 +295,7 @@ module SchemaRepTests =
                   Properties =
                     [ { Name = "values"
                         Optional = true
-                        FSharpType = FSharpList(FSharpList(FSharpClass { Name = "values"; Enclosing = [] })) } ]
+                        FSharpType = FSharpList(FSharpList(FSharpClass("values"))) } ]
                   SubClasses =
                     [ { Name = "values"
                         Properties =

@@ -74,11 +74,11 @@ module SchemaRep =
         let schema = SchemaCache.parseSchema input
         parseJsonSchemaStructured schema
 
-    type FSharpClassName =
-        { Name: string; Enclosing: string list }
+    // type FSharpClassName =
+    //     { Name: string; Enclosing: string list }
 
     type FSharpType =
-        | FSharpClass of FSharpClassName
+        | FSharpClass of string
         | FSharpList of FSharpType
         | FSharpDouble
         | FSharpInt
@@ -91,7 +91,7 @@ module SchemaRep =
           FSharpType: FSharpType }
 
     type FSharpClassType =
-        { Name: FSharpClassName
+        { Name: string
           Properties: FSharpProperty list }
 
     type FSharpRep =
@@ -108,18 +108,10 @@ module SchemaRep =
           Properties =
             [ { Name = "header"
                 Optional = true
-                FSharpType =
-                  FSharpClass(
-                      { Name = "header"
-                        Enclosing = [ "NestedObjects" ] }
-                  ) }
+                FSharpType = FSharpClass("header") }
               { Name = "body"
                 Optional = false
-                FSharpType =
-                  FSharpClass(
-                      { Name = "body"
-                        Enclosing = [ "NestedObjects" ] }
-                  ) } ]
+                FSharpType = FSharpClass("body") } ]
           SubClasses =
             [ { Name = "header"
                 Properties =
@@ -134,11 +126,7 @@ module SchemaRep =
                       FSharpType = FSharpBool }
                     { Name = "time"
                       Optional = true
-                      FSharpType =
-                        FSharpClass(
-                            { Name = "time"
-                              Enclosing = [ "NestedObjects"; "header" ] }
-                        ) } ]
+                      FSharpType = FSharpClass("time") } ]
                 SubClasses =
                   [ { Name = "time"
                       Properties =
@@ -182,8 +170,7 @@ module SchemaRep =
         match jsonSchemaType with
         | JsonBoolean -> (FSharpBool, None)
         | JsonObject(properties) ->
-            (FSharpClass({ Name = propertyName; Enclosing = [] }),
-             Some(jsonPropertyListToFSharpClassTree propertyName properties))
+            (FSharpClass(propertyName), Some(jsonPropertyListToFSharpClassTree propertyName properties))
         | JsonArray(innerType) ->
             let (innerFSharpType, maybeClass) =
                 jsonSchemaTypeToFSharpTypeAndSubClass propertyName innerType
@@ -243,7 +230,7 @@ module SchemaRep =
     //     | JsonString -> failwith "Not Implemented"
 
     let rec private jsonPropertyToFSharpProperty
-        (fSharpClassName: FSharpClassName)
+        (fSharpClassName: string)
         (jsonProperty: JsonProperty)
         : FSharpProperty * FSharpClassType list =
         let { Structure = fSharpType
@@ -257,18 +244,11 @@ module SchemaRep =
 
         (fSharpProperty, classes)
 
-    and private jsonSchemaTypeToFSharpRep
-        ({ Name = name; Enclosing = enclosing } as fSharpClassName)
-        (jsonSchemaType: JsonSchemaType)
-        : FSharpRep =
+    and private jsonSchemaTypeToFSharpRep (fSharpClassName: string) (jsonSchemaType: JsonSchemaType) : FSharpRep =
         match jsonSchemaType with
         | JsonObject(properties) ->
             let fSharpPropertiesAndClasses =
-                [ for property in properties ->
-                      jsonPropertyToFSharpProperty
-                          { Name = property.Name
-                            Enclosing = enclosing @ [ name ] }
-                          property ]
+                [ for property in properties -> jsonPropertyToFSharpProperty (property.Name) property ]
 
             let (properties, innerClasses) = List.unzip fSharpPropertiesAndClasses
 
@@ -299,7 +279,4 @@ module SchemaRep =
         (providedTypeName: string)
         (jsonSchemaType: JsonSchemaType)
         : FSharpRep =
-        jsonSchemaTypeToFSharpRep
-            { Name = providedTypeName
-              Enclosing = [] }
-            jsonSchemaType
+        jsonSchemaTypeToFSharpRep providedTypeName jsonSchemaType
