@@ -68,9 +68,9 @@ module TypeProvider =
             let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
 
             if dotnetTypeWithoutOption.IsValueType then
-                typedefof<Nullable<_>>.MakeGenericType(dotnetTypeWithoutOption) //, Some(Nullable() :> obj))
+                typedefof<Nullable<_>>.MakeGenericType(dotnetTypeWithoutOption)
             else
-                dotnetTypeWithoutOption //, Some(null :> obj)
+                dotnetTypeWithoutOption
         else
             dotnetType
 
@@ -110,7 +110,7 @@ module TypeProvider =
         (providedTypeDefinition: ProvidedTypeDefinition)
         : ProvidedMethod =
         let parameters =
-            [ for property in properties do
+            [ for property in properties ->
                   let parameterType =
                       fSharpTypeToMethodParameterType classMap (property.Optional) property.FSharpType
 
