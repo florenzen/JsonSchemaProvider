@@ -27,6 +27,7 @@ module TypeProvider =
     open System
     open System.Reflection
     open SchemaRep
+    open ExprGenerator
     open ProviderImplementation.ProvidedTypes
     open NJsonSchema
 
@@ -96,17 +97,19 @@ module TypeProvider =
         : ProvidedProperty list =
         [ for { Name = name
                 Optional = optional
-                FSharpType = fSharpType } in properties ->
+                FSharpType = fSharpType } as property in properties ->
 
               ProvidedProperty(
-                  name,
-                  fSharpTypeToPropertyType classMap optional fSharpType,
-                  ?getterCode = None // TODO
+                  propertyName = name,
+                  propertyType = fSharpTypeToPropertyType classMap optional fSharpType,
+                  getterCode = generatePropertyGetter property
               ) ]
 
     let private createProvidedCreateMethod
         (classMap: Map<string, ProvidedTypeDefinition>)
         (properties: FSharpProperty list)
+        (schemaHashCode: int32)
+        (schema: JsonSchema)
         (providedTypeDefinition: ProvidedTypeDefinition)
         : ProvidedMethod =
         let parameters =
@@ -119,17 +122,28 @@ module TypeProvider =
                   else
                       ProvidedParameter(property.Name, parameterType) ]
 
-        ProvidedMethod("Create", parameters, providedTypeDefinition, ?invokeCode = None)
+        ProvidedMethod(
+            methodName = "Create",
+            parameters = parameters,
+            returnType = providedTypeDefinition,
+            invokeCode = generateCreateInvokeCode schemaHashCode (schema.ToJson()) properties,
+            isStatic = true
+        )
 
     let rec private createSubClassProvidedTypeDefinitions
+        (schemaHashCode: int32)
+        (schema: JsonSchema)
         (providedTypeData: ProvidedTypeData)
         (subClasses: FSharpClassTree list)
         : Map<string, ProvidedTypeDefinition> =
         subClasses
-        |> List.map (fun subClass -> (subClass.Name, fSharpClassTreeToProvidedTypeDefinition providedTypeData subClass))
+        |> List.map (fun subClass ->
+            (subClass.Name, fSharpClassTreeToProvidedTypeDefinition schemaHashCode schema providedTypeData subClass))
         |> Map.ofList
 
     and private fSharpClassTreeToProvidedTypeDefinition
+        (schemaHashCode: int32)
+        (schema: JsonSchema)
         (providedTypeData: ProvidedTypeData)
         { Name = className
           Properties = properties
@@ -143,7 +157,8 @@ module TypeProvider =
                 Some(providedTypeData.RuntimeType)
             )
 
-        let classMap = createSubClassProvidedTypeDefinitions providedTypeData subClasses
+        let classMap =
+            createSubClassProvidedTypeDefinitions schemaHashCode schema providedTypeData subClasses
 
         classMap
         |> Map.values
@@ -156,7 +171,7 @@ module TypeProvider =
         |> List.iter (fun providedProperty -> providedTypeDefinition.AddMember(providedProperty))
 
         let createMethod =
-            createProvidedCreateMethod classMap properties providedTypeDefinition
+            createProvidedCreateMethod classMap properties schemaHashCode schema providedTypeDefinition
 
         providedTypeDefinition.AddMember(createMethod)
 
@@ -178,5 +193,5 @@ module TypeProvider =
         let fSharpClassTree =
             parseJsonSchemaStructured schema |> jsonObjectToFSharpClassTree typeName
 
-        fSharpClassTreeToProvidedTypeDefinition providedTypeData fSharpClassTree
+        fSharpClassTreeToProvidedTypeDefinition schemaHashCode schema providedTypeData fSharpClassTree
 // TODO: parse method
