@@ -20,7 +20,8 @@
   <ItemGroup>
     <Compile Include="..\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fs" />
     <Compile Include="SchemaRep.fs" />
+    <Compile Include="ExprGenerator.fs" />
     <Compile Include="TypeProvider.fs" />
-   <Compile Include="JsonSPImpl.fs" />
+    <Compile Include="JsonSPImpl.fs" />
   </ItemGroup>
 </Project>
