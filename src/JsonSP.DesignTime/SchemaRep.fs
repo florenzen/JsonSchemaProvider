@@ -62,11 +62,11 @@ module SchemaRep =
         | JsonObjectType.Number -> JsonNumber
         | JsonObjectType.Object -> parseObject schema
         | JsonObjectType.String -> JsonString
-        | _ -> failwithf "Unsupported JSON object type %O" schema.Type
+        | _ -> failwithf "Unsupported JSON object type %A." schema.Type
 
     let parseJsonSchemaStructured (schema: JsonSchema) : JsonSchemaType =
         if schema.Type <> JsonObjectType.Object then
-            failwith "Only object supported"
+            failwith "Only object supported."
 
         parseType schema
 
