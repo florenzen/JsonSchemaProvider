@@ -69,7 +69,7 @@ type JsonSPImpl(config: TypeProviderConfig) as this =
                 TypeProvider.run schema schemaHashCode thisAssembly namespaceName typeName runtimeType
 
             providedType
-        | paramValues -> failwithf "Unexpected parameter values %A" paramValues
+        | paramValues -> failwithf "Unexpected parameter values %A." paramValues
 
     do
         jsonSchemaType.DefineStaticParameters(parameters = staticParams, instantiationFunction = instantiate)
