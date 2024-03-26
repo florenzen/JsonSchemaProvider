@@ -48,7 +48,7 @@ type JsonSPImpl(config: TypeProviderConfig) as this =
     let runtimeType = typeof<NullableJsonValue>
 
     let jsonSchemaType =
-        ProvidedTypeDefinition(thisAssembly, namespaceName, "JsonSP", baseType = Some runtimeType)
+        ProvidedTypeDefinition(thisAssembly, namespaceName, "JsonSchemaProvider", baseType = Some runtimeType)
 
     let instantiate (typeName: string) (parameterValues: obj[]) =
         match parameterValues with
