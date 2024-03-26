@@ -30,6 +30,8 @@ module TypeProvider =
     open ExprGenerator
     open ProviderImplementation.ProvidedTypes
     open NJsonSchema
+    open JsonSchemaProvider
+    open FSharp.Data
 
     type private ProvidedTypeData =
         { Assembly: Assembly
@@ -109,7 +111,7 @@ module TypeProvider =
         (classMap: Map<string, ProvidedTypeDefinition>)
         (properties: FSharpProperty list)
         (schemaHashCode: int32)
-        (schema: JsonSchema)
+        (schemaString: string)
         (providedTypeDefinition: ProvidedTypeDefinition)
         : ProvidedMethod =
         let parameters =
@@ -126,24 +128,55 @@ module TypeProvider =
             methodName = "Create",
             parameters = parameters,
             returnType = providedTypeDefinition,
-            invokeCode = generateCreateInvokeCode schemaHashCode (schema.ToJson()) properties,
+            invokeCode = generateCreateInvokeCode schemaHashCode schemaString properties,
             isStatic = true
+        )
+
+    let private createProvidedParseMethod
+        (returnType: Type)
+        (schemaHashCode: int32)
+        (schemaString: string)
+        : ProvidedMethod =
+        ProvidedMethod(
+            methodName = "Parse",
+            parameters = [ ProvidedParameter("json", typeof<string>) ],
+            returnType = returnType,
+            isStatic = true,
+            invokeCode =
+                fun args ->
+                    <@@
+                        let schema = SchemaCache.retrieveSchema schemaHashCode schemaString
+
+                        let validationErrors = schema.Validate((%%args[0]): string)
+
+                        if Seq.isEmpty validationErrors then
+                            NullableJsonValue(JsonValue.Parse(%%args[0]))
+                        else
+                            let message =
+                                validationErrors
+                                |> Seq.map (fun validationError -> validationError.ToString())
+                                |> fun msgs ->
+                                    System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+
+                            raise (System.ArgumentException(message, ((%%args[0]): string)))
+                    @@>
         )
 
     let rec private createSubClassProvidedTypeDefinitions
         (schemaHashCode: int32)
-        (schema: JsonSchema)
+        (schemaString: string)
         (providedTypeData: ProvidedTypeData)
         (subClasses: FSharpClassTree list)
         : Map<string, ProvidedTypeDefinition> =
         subClasses
         |> List.map (fun subClass ->
-            (subClass.Name, fSharpClassTreeToProvidedTypeDefinition schemaHashCode schema providedTypeData subClass))
+            (subClass.Name,
+             fSharpClassTreeToProvidedTypeDefinition schemaHashCode schemaString providedTypeData subClass))
         |> Map.ofList
 
     and private fSharpClassTreeToProvidedTypeDefinition
         (schemaHashCode: int32)
-        (schema: JsonSchema)
+        (schemaString: string)
         (providedTypeData: ProvidedTypeData)
         { Name = className
           Properties = properties
@@ -158,7 +191,7 @@ module TypeProvider =
             )
 
         let classMap =
-            createSubClassProvidedTypeDefinitions schemaHashCode schema providedTypeData subClasses
+            createSubClassProvidedTypeDefinitions schemaHashCode schemaString providedTypeData subClasses
 
         classMap
         |> Map.values
@@ -171,9 +204,14 @@ module TypeProvider =
         |> List.iter (fun providedProperty -> providedTypeDefinition.AddMember(providedProperty))
 
         let createMethod =
-            createProvidedCreateMethod classMap properties schemaHashCode schema providedTypeDefinition
+            createProvidedCreateMethod classMap properties schemaHashCode schemaString providedTypeDefinition
 
         providedTypeDefinition.AddMember(createMethod)
+
+        let parseMethod =
+            createProvidedParseMethod providedTypeDefinition schemaHashCode schemaString
+
+        providedTypeDefinition.AddMember(parseMethod)
 
         providedTypeDefinition
 
@@ -193,5 +231,4 @@ module TypeProvider =
         let fSharpClassTree =
             parseJsonSchemaStructured schema |> jsonObjectToFSharpClassTree typeName
 
-        fSharpClassTreeToProvidedTypeDefinition schemaHashCode schema providedTypeData fSharpClassTree
-// TODO: parse method
+        fSharpClassTreeToProvidedTypeDefinition schemaHashCode (schema.ToJson()) providedTypeData fSharpClassTree
