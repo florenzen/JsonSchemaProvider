@@ -203,10 +203,10 @@ module TypeProvider =
         providedProperties
         |> List.iter (fun providedProperty -> providedTypeDefinition.AddMember(providedProperty))
 
-        let createMethod =
-            createProvidedCreateMethod classMap properties schemaHashCode schemaString providedTypeDefinition
+        // let createMethod =
+        //     createProvidedCreateMethod classMap properties schemaHashCode schemaString providedTypeDefinition
 
-        providedTypeDefinition.AddMember(createMethod)
+        // providedTypeDefinition.AddMember(createMethod)
 
         let parseMethod =
             createProvidedParseMethod providedTypeDefinition schemaHashCode schemaString

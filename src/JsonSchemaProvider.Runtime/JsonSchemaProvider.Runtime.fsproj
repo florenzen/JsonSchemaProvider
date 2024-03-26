@@ -57,4 +57,8 @@ and uses the JsonValue data type from FSharp.Data.</Description>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\JsonSP.DesignTime\JsonSP.DesignTime.fsproj" />
+  </ItemGroup>
+
 </Project>
