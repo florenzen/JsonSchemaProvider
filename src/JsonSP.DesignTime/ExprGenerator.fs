@@ -25,9 +25,69 @@ namespace JsonSP.DesignTime
 
 module ExprGenerator =
     open FSharp.Quotations
+    open FSharp.Quotations.Patterns
+    open FSharp.Reflection
     open FSharp.Data
     open SchemaRep
     open JsonSchemaProvider
+    open System
+    open System.Reflection
+
+    module private CommonExprs =
+        let private optionPropertyInfo (elementType: Type) (propertyName: string) : PropertyInfo =
+            let optionType = (typedefof<_ option>).MakeGenericType([| elementType |])
+            let properties = optionType.GetProperties()
+            let pi = properties |> Array.filter (fun pi -> pi.Name = propertyName) |> Array.head
+            pi
+
+        let private optionIsSomePropertyInfo (elementType: Type) : PropertyInfo =
+            optionPropertyInfo elementType "IsSome"
+
+        let private optionValuePropertyInfo (elementType: Type) : PropertyInfo = optionPropertyInfo elementType "Value"
+
+        let private optionSomeUnionCaseInfo (elementType: Type) =
+            FSharpType.GetUnionCases(typedefof<_ option>.MakeGenericType(elementType))[1]
+
+        let private optionNoneUnionCaseInfo (elementType: Type) =
+            FSharpType.GetUnionCases(typedefof<_ option>.MakeGenericType(elementType))[0]
+
+        let private nullableJsonValueJsonValPropertyInfo =
+            match <@@ NullableJsonValue(JsonValue.Boolean(true)).JsonVal @@> with
+            | PropertyGet(_, pi, _) -> pi
+            | _ -> failwith "Cannot happen."
+
+        let private jsonValueItemMethodInfo =
+            match <@@ (JsonValue.Record(Array.empty))["x"] @@> with
+            | Call(_, mi, _) -> mi
+            | x -> failwith "Cannot happen."
+
+        let private jsonValueTryGetPropertyMethodInfo =
+            match <@@ (JsonValue.Record(Array.empty)).TryGetProperty("x") @@> with
+            | Call(_, mi, _) -> mi
+            | x -> failwith "Cannot happen."
+
+        let getOptionIsSome (elementType: Type) (receiver: Expr) : Expr =
+            let pi = optionIsSomePropertyInfo elementType
+            let propertyGet = Expr.PropertyGet(pi, [ receiver ])
+            propertyGet
+
+        let getOptionValue (elementType: Type) (receiver: Expr) : Expr =
+            Expr.PropertyGet(receiver, optionValuePropertyInfo elementType)
+
+        let getNullableJsonValueJsonVal (receiver: Expr) : Expr =
+            Expr.PropertyGet(receiver, nullableJsonValueJsonValPropertyInfo)
+
+        let newOptionSome (elementType: Type) (arg: Expr) : Expr =
+            Expr.NewUnionCase(optionSomeUnionCaseInfo elementType, [ arg ])
+
+        let newOptionNone (elementType: Type) : Expr =
+            Expr.NewUnionCase(optionNoneUnionCaseInfo elementType, [])
+
+        let callJsonValueItem (receiver: Expr) (name: string) : Expr =
+            Expr.Call(jsonValueItemMethodInfo, [ receiver; Expr.Value(name) ])
+
+        let callJsonValueTryGetPropertyName (receiver: Expr) (name: string) : Expr =
+            Expr.Call(jsonValueTryGetPropertyMethodInfo, [ receiver; Expr.Value(name) ])
 
     let rec private generateJsonValToTypedObject (fSharpType: FSharpType) : Expr =
         match fSharpType with
@@ -43,24 +103,50 @@ module ExprGenerator =
     let rec private generateTypedObjectToJsonVal () : Expr = failwith "nyi"
 
     let generatePropertyGetter
+        (plainPropertyType: Type)
         { Name = name
           Optional = optional
           FSharpType = fSharpType }
         : Expr list -> Expr =
-        fun (args: Expr list) ->
-            let conversion = generateJsonValToTypedObject fSharpType
+        let conversion = generateJsonValToTypedObject fSharpType
 
-            if optional then
-                <@@
-                    match ((%%args[0]): NullableJsonValue).JsonVal.TryGetProperty(name) with
-                    | None -> None
-                    | Some(jsonVal) -> Some((%%conversion) jsonVal)
-                @@>
-            else
-                <@@
-                    let jsonVal = ((%%args[0]): NullableJsonValue).JsonVal[name]
-                    (%%conversion) jsonVal
-                @@>
+        if optional then
+            fun (args: Expr list) ->
+                // match %%(args[0]).JsonVal.TryGetProperty(name) with
+                // | None -> None
+                // | Some(jsonVal) -> Some((%%conversion) jsonVal)
+                //
+                // let maybeProperty = %%(args[0]).JsonVal.TryGetProperty(name)
+                // if maybeProperty.IsSome then
+                //     Some(%%conversion maybeProperty.Value)
+                // else
+                //     None
+                let scrutineeVar = Var("maybeProperty", typeof<JsonValue option>)
+                let jsonVal = CommonExprs.getNullableJsonValueJsonVal args[0]
+                let maybePropertySelect = CommonExprs.callJsonValueTryGetPropertyName jsonVal name
+
+                let condition =
+                    CommonExprs.getOptionIsSome typeof<JsonValue> (Expr.Var(scrutineeVar))
+
+                let thenBranch =
+                    CommonExprs.newOptionSome
+                        plainPropertyType
+                        (Expr.Application(
+                            conversion,
+                            CommonExprs.getOptionValue typeof<JsonValue> (Expr.Var(scrutineeVar))
+                        ))
+
+                let elseBranch = CommonExprs.newOptionNone plainPropertyType
+
+                Expr.Let(scrutineeVar, maybePropertySelect, Expr.IfThenElse(condition, thenBranch, elseBranch))
+        else
+            // %%conversion %%(args[0]).JsonVal[name]
+            fun (args: Expr list) ->
+                let jsonVal = CommonExprs.getNullableJsonValueJsonVal args[0]
+
+                let propertySelect = CommonExprs.callJsonValueItem jsonVal name
+
+                Expr.Application(conversion, propertySelect)
 
     let generateCreateInvokeCode
         (schemaHashCode: int32)
