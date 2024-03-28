@@ -58,7 +58,7 @@ module TypeProvider =
         else
             dotnetType
 
-    let rec private fSharpTypeToPropertyType
+    let private fSharpTypeToPropertyType
         (classMap: Map<string, ProvidedTypeDefinition>)
         (optional: bool)
         (fSharpType: FSharpType)
@@ -101,10 +101,12 @@ module TypeProvider =
                 Optional = optional
                 FSharpType = fSharpType } as property in properties ->
 
+              let plainPropertyType = fSharpTypeToDotnetType classMap fSharpType
+
               ProvidedProperty(
                   propertyName = name,
-                  propertyType = fSharpTypeToPropertyType classMap optional fSharpType,
-                  getterCode = generatePropertyGetter property
+                  propertyType = optionalOrPlainType optional plainPropertyType,
+                  getterCode = generatePropertyGetter plainPropertyType property
               ) ]
 
     let private createProvidedCreateMethod
