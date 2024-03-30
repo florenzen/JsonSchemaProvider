@@ -164,16 +164,16 @@ module TypeProvider =
                     @@>
         )
 
-    let rec private createSubClassProvidedTypeDefinitions
+    let rec private createNestedClassProvidedTypeDefinitions
         (schemaHashCode: int32)
         (schemaString: string)
         (providedTypeData: ProvidedTypeData)
-        (subClasses: FSharpClassTree list)
+        (nestedClasses: FSharpClassTree list)
         : Map<string, ProvidedTypeDefinition> =
-        subClasses
-        |> List.map (fun subClass ->
-            (subClass.Name,
-             fSharpClassTreeToProvidedTypeDefinition schemaHashCode schemaString providedTypeData subClass))
+        nestedClasses
+        |> List.map (fun nestedClass ->
+            (nestedClass.Name,
+             fSharpClassTreeToProvidedTypeDefinition schemaHashCode schemaString providedTypeData nestedClass true))
         |> Map.ofList
 
     and private fSharpClassTreeToProvidedTypeDefinition
@@ -182,23 +182,24 @@ module TypeProvider =
         (providedTypeData: ProvidedTypeData)
         { Name = className
           Properties = properties
-          SubClasses = subClasses }
+          NestedClasses = nestedClasses }
+        (innerClass: bool)
         : ProvidedTypeDefinition =
         let providedTypeDefinition =
             ProvidedTypeDefinition(
                 providedTypeData.Assembly,
                 providedTypeData.NamespaceName,
-                className,
+                className + (if innerClass then "Obj" else ""),
                 Some(providedTypeData.RuntimeType)
             )
 
         let classMap =
-            createSubClassProvidedTypeDefinitions schemaHashCode schemaString providedTypeData subClasses
+            createNestedClassProvidedTypeDefinitions schemaHashCode schemaString providedTypeData nestedClasses
 
         classMap
         |> Map.values
-        |> Seq.iter (fun subClassProvidedTypeDefinition ->
-            providedTypeDefinition.AddMember(subClassProvidedTypeDefinition))
+        |> Seq.iter (fun nestedClassProvidedTypeDefinition ->
+            providedTypeDefinition.AddMember(nestedClassProvidedTypeDefinition))
 
         let providedProperties = createProvidedProperties classMap properties
 
@@ -210,10 +211,11 @@ module TypeProvider =
 
         // providedTypeDefinition.AddMember(createMethod)
 
-        let parseMethod =
-            createProvidedParseMethod providedTypeDefinition schemaHashCode schemaString
+        if not innerClass then
+            let parseMethod =
+                createProvidedParseMethod providedTypeDefinition schemaHashCode schemaString
 
-        providedTypeDefinition.AddMember(parseMethod)
+            providedTypeDefinition.AddMember(parseMethod)
 
         providedTypeDefinition
 
@@ -233,4 +235,4 @@ module TypeProvider =
         let fSharpClassTree =
             parseJsonSchemaStructured schema |> jsonObjectToFSharpClassTree typeName
 
-        fSharpClassTreeToProvidedTypeDefinition schemaHashCode (schema.ToJson()) providedTypeData fSharpClassTree
+        fSharpClassTreeToProvidedTypeDefinition schemaHashCode (schema.ToJson()) providedTypeData fSharpClassTree false

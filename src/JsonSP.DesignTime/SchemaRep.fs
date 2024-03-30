@@ -101,7 +101,7 @@ module SchemaRep =
     type FSharpClassTree =
         { Name: string
           Properties: FSharpProperty list
-          SubClasses: FSharpClassTree list }
+          NestedClasses: FSharpClassTree list }
 
     let nestedObjects =
         { Name = "NestedObjects"
@@ -112,7 +112,7 @@ module SchemaRep =
               { Name = "body"
                 Optional = false
                 FSharpType = FSharpClass("body") } ]
-          SubClasses =
+          NestedClasses =
             [ { Name = "header"
                 Properties =
                   [ { Name = "id"
@@ -127,7 +127,7 @@ module SchemaRep =
                     { Name = "time"
                       Optional = true
                       FSharpType = FSharpClass("time") } ]
-                SubClasses =
+                NestedClasses =
                   [ { Name = "time"
                       Properties =
                         [ { Name = "hour"
@@ -139,7 +139,7 @@ module SchemaRep =
                           { Name = "second"
                             Optional = false
                             FSharpType = FSharpInt } ]
-                      SubClasses = [] } ] }
+                      NestedClasses = [] } ] }
               { Name = "body"
                 Properties =
                   [ { Name = "length"
@@ -148,7 +148,7 @@ module SchemaRep =
                     { Name = "payload"
                       Optional = false
                       FSharpType = FSharpString } ]
-                SubClasses = [] } ] }
+                NestedClasses = [] } ] }
 
     let rec private jsonPropertyToFSharpPropertyAndSubClass
         ({ Name = propertyName
@@ -213,7 +213,7 @@ module SchemaRep =
 
         { Name = lhsName
           Properties = fSharpProperties
-          SubClasses = subClasses }
+          NestedClasses = subClasses }
 
     let jsonObjectToFSharpClassTree (lhsName: string) (jsonSchemaType: JsonSchemaType) : FSharpClassTree =
         match jsonSchemaType with
