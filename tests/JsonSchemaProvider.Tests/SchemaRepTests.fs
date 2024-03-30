@@ -243,7 +243,7 @@ module SchemaRepTests =
                       { Name = "body"
                         Optional = false
                         FSharpType = FSharpClass("body") } ]
-                  SubClasses =
+                  NestedClasses =
                     [ { Name = "header"
                         Properties =
                           [ { Name = "id"
@@ -258,7 +258,7 @@ module SchemaRepTests =
                             { Name = "time"
                               Optional = true
                               FSharpType = FSharpClass("time") } ]
-                        SubClasses =
+                        NestedClasses =
                           [ { Name = "time"
                               Properties =
                                 [ { Name = "hour"
@@ -270,7 +270,7 @@ module SchemaRepTests =
                                   { Name = "second"
                                     Optional = false
                                     FSharpType = FSharpInt } ]
-                              SubClasses = [] } ] }
+                              NestedClasses = [] } ] }
                       { Name = "body"
                         Properties =
                           [ { Name = "length"
@@ -279,7 +279,7 @@ module SchemaRepTests =
                             { Name = "payload"
                               Optional = false
                               FSharpType = FSharpString } ]
-                        SubClasses = [] } ] }
+                        NestedClasses = [] } ] }
 
             Expect.equal actual expected ""
         }
@@ -296,7 +296,7 @@ module SchemaRepTests =
                     [ { Name = "values"
                         Optional = true
                         FSharpType = FSharpList(FSharpList(FSharpClass("values"))) } ]
-                  SubClasses =
+                  NestedClasses =
                     [ { Name = "values"
                         Properties =
                           [ { Name = "propA"
@@ -305,7 +305,7 @@ module SchemaRepTests =
                             { Name = "propB"
                               Optional = true
                               FSharpType = FSharpString } ]
-                        SubClasses = [] } ] }
+                        NestedClasses = [] } ] }
 
             Expect.equal actual expected ""
         }
