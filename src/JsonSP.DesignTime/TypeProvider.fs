@@ -38,7 +38,7 @@ module TypeProvider =
           NamespaceName: string
           RuntimeType: Type }
 
-    let rec private fSharpTypeToDotnetType
+    let rec private fSharpTypeToCompileTimeType
         (classMap: Map<string, ProvidedTypeDefinition>)
         (fSharpType: FSharpType)
         : Type =
@@ -46,8 +46,22 @@ module TypeProvider =
         | FSharpBool -> typeof<bool>
         | FSharpClass(name) -> classMap[name]
         | FSharpList(innerFSharpType) ->
-            let innerDotnetType = fSharpTypeToDotnetType classMap innerFSharpType
-            typedefof<_ list>.MakeGenericType(innerDotnetType)
+            let innerStaticType = fSharpTypeToCompileTimeType classMap innerFSharpType
+            typedefof<_ list>.MakeGenericType(innerStaticType)
+        | FSharpDouble -> typeof<double>
+        | FSharpInt -> typeof<int>
+        | FSharpString -> typeof<string>
+
+    let rec private fSharpTypeToRuntimeType
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (fSharpType: FSharpType)
+        : Type =
+        match fSharpType with
+        | FSharpBool -> typeof<bool>
+        | FSharpClass(_) -> typeof<NullableJsonValue>
+        | FSharpList(innerFSharpType) ->
+            let innerRuntimeType = fSharpTypeToCompileTimeType classMap innerFSharpType
+            typedefof<_ list>.MakeGenericType(innerRuntimeType)
         | FSharpDouble -> typeof<double>
         | FSharpInt -> typeof<int>
         | FSharpString -> typeof<string>
@@ -63,7 +77,7 @@ module TypeProvider =
         (optional: bool)
         (fSharpType: FSharpType)
         : Type =
-        let dotnetType = fSharpTypeToDotnetType classMap fSharpType
+        let dotnetType = fSharpTypeToCompileTimeType classMap fSharpType
         optionalOrPlainType optional dotnetType
 
     let private nullableOrPlainType (optional: bool) (dotnetType: Type) : Type =
@@ -90,7 +104,7 @@ module TypeProvider =
         (optional: bool)
         (fSharpType: FSharpType)
         : Type =
-        let dotnetType = fSharpTypeToDotnetType classMap fSharpType
+        let dotnetType = fSharpTypeToCompileTimeType classMap fSharpType
         nullableOrPlainType optional dotnetType
 
     let private createProvidedProperties
@@ -101,7 +115,7 @@ module TypeProvider =
                 Optional = optional
                 FSharpType = fSharpType } as property in properties ->
 
-              let plainPropertyType = fSharpTypeToDotnetType classMap fSharpType
+              let plainPropertyType = fSharpTypeToRuntimeType classMap fSharpType
 
               ProvidedProperty(
                   propertyName = name,

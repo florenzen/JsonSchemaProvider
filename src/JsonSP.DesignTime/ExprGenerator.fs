@@ -103,7 +103,7 @@ module ExprGenerator =
     let rec private generateTypedObjectToJsonVal () : Expr = failwith "nyi"
 
     let generatePropertyGetter
-        (plainPropertyType: Type)
+        (plainPropertyRuntimeType: Type)
         { Name = name
           Optional = optional
           FSharpType = fSharpType }
@@ -130,13 +130,13 @@ module ExprGenerator =
 
                 let thenBranch =
                     CommonExprs.newOptionSome
-                        plainPropertyType
+                        plainPropertyRuntimeType
                         (Expr.Application(
                             conversion,
                             CommonExprs.getOptionValue typeof<JsonValue> (Expr.Var(scrutineeVar))
                         ))
 
-                let elseBranch = CommonExprs.newOptionNone plainPropertyType
+                let elseBranch = CommonExprs.newOptionNone plainPropertyRuntimeType
 
                 Expr.Let(scrutineeVar, maybePropertySelect, Expr.IfThenElse(condition, thenBranch, elseBranch))
         else
