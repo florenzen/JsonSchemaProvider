@@ -108,7 +108,7 @@ module ExprGenerator =
           Optional = optional
           FSharpType = fSharpType }
         : Expr list -> Expr =
-        let conversion = generateJsonValToTypedObject fSharpType
+        let convertToRuntimeType = generateJsonValToTypedObject fSharpType
 
         if optional then
             fun (args: Expr list) ->
@@ -132,7 +132,7 @@ module ExprGenerator =
                     CommonExprs.newOptionSome
                         plainPropertyRuntimeType
                         (Expr.Application(
-                            conversion,
+                            convertToRuntimeType,
                             CommonExprs.getOptionValue typeof<JsonValue> (Expr.Var(scrutineeVar))
                         ))
 
@@ -146,7 +146,7 @@ module ExprGenerator =
 
                 let propertySelect = CommonExprs.callJsonValueItem jsonVal name
 
-                Expr.Application(conversion, propertySelect)
+                Expr.Application(convertToRuntimeType, propertySelect)
 
     let generateCreateInvokeCode
         (schemaHashCode: int32)
