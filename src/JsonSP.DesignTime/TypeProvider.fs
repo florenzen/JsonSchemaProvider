@@ -72,14 +72,6 @@ module TypeProvider =
         else
             dotnetType
 
-    let private fSharpTypeToPropertyType
-        (classMap: Map<string, ProvidedTypeDefinition>)
-        (optional: bool)
-        (fSharpType: FSharpType)
-        : Type =
-        let dotnetType = fSharpTypeToCompileTimeType classMap fSharpType
-        optionalOrPlainType optional dotnetType
-
     let private nullableOrPlainType (optional: bool) (dotnetType: Type) : Type =
         if optional then
             let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
@@ -115,12 +107,13 @@ module TypeProvider =
                 Optional = optional
                 FSharpType = fSharpType } as property in properties ->
 
-              let plainPropertyType = fSharpTypeToRuntimeType classMap fSharpType
+              let plainPropertyCompileTimeType = fSharpTypeToCompileTimeType classMap fSharpType
+              let plainPropertyRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
 
               ProvidedProperty(
                   propertyName = name,
-                  propertyType = optionalOrPlainType optional plainPropertyType,
-                  getterCode = generatePropertyGetter plainPropertyType property
+                  propertyType = optionalOrPlainType optional plainPropertyCompileTimeType,
+                  getterCode = generatePropertyGetter plainPropertyRuntimeType property
               ) ]
 
     let private createProvidedCreateMethod
@@ -174,7 +167,7 @@ module TypeProvider =
                                 |> fun msgs ->
                                     System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
 
-                            raise (System.ArgumentException(message, ((%%args[0]): string)))
+                            raise (ArgumentException(message, ((%%args[0]): string)))
                     @@>
         )
 
