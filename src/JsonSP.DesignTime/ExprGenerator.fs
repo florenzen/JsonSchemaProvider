@@ -29,11 +29,21 @@ module ExprGenerator =
     open FSharp.Reflection
     open FSharp.Data
     open SchemaRep
+    open TypeLevelConversions
     open JsonSchemaProvider
     open System
     open System.Reflection
+    open ProviderImplementation.ProvidedTypes
 
     module private CommonExprs =
+        let private fSharpCore = typeof<List<_>>.Assembly
+
+        let private arrayModuleType =
+            fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ArrayModule")
+
+        let private listModuleType =
+            fSharpCore.GetTypes() |> Array.find (fun ty -> ty.Name = "ListModule")
+
         let private optionPropertyInfo (elementType: Type) (propertyName: string) : PropertyInfo =
             let optionType = (typedefof<_ option>).MakeGenericType([| elementType |])
             let properties = optionType.GetProperties()
@@ -57,14 +67,29 @@ module ExprGenerator =
             | _ -> failwith "Cannot happen."
 
         let private jsonValueItemMethodInfo =
-            match <@@ (JsonValue.Record(Array.empty))["x"] @@> with
+            match <@@ JsonValue.Record(Array.empty)["x"] @@> with
             | Call(_, mi, _) -> mi
-            | x -> failwith "Cannot happen."
+            | _ -> failwith "Cannot happen."
 
         let private jsonValueTryGetPropertyMethodInfo =
-            match <@@ (JsonValue.Record(Array.empty)).TryGetProperty("x") @@> with
+            match <@@ JsonValue.Record(Array.empty).TryGetProperty("x") @@> with
             | Call(_, mi, _) -> mi
-            | x -> failwith "Cannot happen."
+            | _ -> failwith "Cannot happen."
+
+        let private jsonValueAsArrayMethodInfo =
+            match <@@ JsonValue.Array(Array.empty).AsArray() @@> with
+            | Call(_, mi, _) -> mi
+            | _ -> failwith "Cannot happen."
+
+        let private arrayMapMethodInfo (fromType: Type) (toType: Type) : MethodInfo =
+            arrayModuleType.GetMethods()
+            |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+            |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(fromType, toType)
+
+        let private listOfArryMethodInfo (elementType: Type) : MethodInfo =
+            listModuleType.GetMethods()
+            |> Array.find (fun methodInfo -> methodInfo.Name = "OfArray")
+            |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(elementType)
 
         let getOptionIsSome (elementType: Type) (receiver: Expr) : Expr =
             let pi = optionIsSomePropertyInfo elementType
@@ -89,13 +114,34 @@ module ExprGenerator =
         let callJsonValueTryGetPropertyName (receiver: Expr) (name: string) : Expr =
             Expr.Call(jsonValueTryGetPropertyMethodInfo, [ receiver; Expr.Value(name) ])
 
-    let rec private generateJsonValToTypedObject (fSharpType: FSharpType) : Expr =
+        let callJsonValueAsArray (receiver: Expr) : Expr =
+            Expr.Call(jsonValueAsArrayMethodInfo, [ receiver ])
+
+        let callArrayMap (func: Expr) (array: Expr) (fromType: Type) (toType: Type) : Expr =
+            Expr.Call(arrayMapMethodInfo fromType toType, [ func; array ])
+
+        let callListOfArray (array: Expr) (elementType: Type) : Expr =
+            Expr.Call(listOfArryMethodInfo elementType, [ array ])
+
+    let rec private generateJsonValToTypedObject
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (fSharpType: FSharpType)
+        : Expr =
         match fSharpType with
         | FSharpBool -> <@@ fun (jsonVal: JsonValue) -> jsonVal.AsBoolean() @@>
         | FSharpClass(_) -> <@@ fun (jsonVal: JsonValue) -> NullableJsonValue(jsonVal) @@>
         | FSharpList(innerType) ->
-            let generateForInner = generateJsonValToTypedObject innerType
-            <@@ fun (jsonVal: JsonValue) -> Array.map %%generateForInner (jsonVal.AsArray()) @@>
+            // <@@ fun (jsonVal: JsonValue) -> List.ofArray (Array.map %%generateForInner (jsonVal.AsArray())) @@>
+            let generateForInner = generateJsonValToTypedObject classMap innerType
+            let innerRuntimeType = fSharpTypeToRuntimeType classMap innerType
+            let jsonValVar = Var("jsonVal", typeof<JsonValue>)
+            let jsonValAsArray = CommonExprs.callJsonValueAsArray (Expr.Var(jsonValVar))
+
+            let mappedArray =
+                CommonExprs.callArrayMap generateForInner jsonValAsArray typeof<JsonValue> innerRuntimeType
+
+            let arrayAsList = CommonExprs.callListOfArray mappedArray innerRuntimeType
+            Expr.Lambda(jsonValVar, arrayAsList)
         | FSharpDouble -> <@@ fun (jsonVal: JsonValue) -> jsonVal.AsFloat() @@>
         | FSharpInt -> <@@ fun (jsonVal: JsonValue) -> jsonVal.AsInteger() @@>
         | FSharpString -> <@@ fun (jsonVal: JsonValue) -> jsonVal.AsString() @@>
@@ -103,12 +149,13 @@ module ExprGenerator =
     let rec private generateTypedObjectToJsonVal () : Expr = failwith "nyi"
 
     let generatePropertyGetter
-        (plainPropertyRuntimeType: Type)
+        (classMap: Map<string, ProvidedTypeDefinition>)
         { Name = name
           Optional = optional
           FSharpType = fSharpType }
         : Expr list -> Expr =
-        let convertToRuntimeType = generateJsonValToTypedObject fSharpType
+        let plainPropertyRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
+        let convertToRuntimeType = generateJsonValToTypedObject classMap fSharpType
 
         if optional then
             fun (args: Expr list) ->

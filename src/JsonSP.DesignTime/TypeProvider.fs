@@ -27,6 +27,7 @@ module TypeProvider =
     open System
     open System.Reflection
     open SchemaRep
+    open TypeLevelConversions
     open ExprGenerator
     open ProviderImplementation.ProvidedTypes
     open NJsonSchema
@@ -38,66 +39,6 @@ module TypeProvider =
           NamespaceName: string
           RuntimeType: Type }
 
-    let rec private fSharpTypeToCompileTimeType
-        (classMap: Map<string, ProvidedTypeDefinition>)
-        (fSharpType: FSharpType)
-        : Type =
-        match fSharpType with
-        | FSharpBool -> typeof<bool>
-        | FSharpClass(name) -> classMap[name]
-        | FSharpList(innerFSharpType) ->
-            let innerStaticType = fSharpTypeToCompileTimeType classMap innerFSharpType
-            typedefof<_ list>.MakeGenericType(innerStaticType)
-        | FSharpDouble -> typeof<double>
-        | FSharpInt -> typeof<int>
-        | FSharpString -> typeof<string>
-
-    let rec private fSharpTypeToRuntimeType
-        (classMap: Map<string, ProvidedTypeDefinition>)
-        (fSharpType: FSharpType)
-        : Type =
-        match fSharpType with
-        | FSharpBool -> typeof<bool>
-        | FSharpClass(_) -> typeof<NullableJsonValue>
-        | FSharpList(innerFSharpType) ->
-            let innerRuntimeType = fSharpTypeToCompileTimeType classMap innerFSharpType
-            typedefof<_ list>.MakeGenericType(innerRuntimeType)
-        | FSharpDouble -> typeof<double>
-        | FSharpInt -> typeof<int>
-        | FSharpString -> typeof<string>
-
-    let private optionalOrPlainType (optional: bool) (dotnetType: Type) : Type =
-        if optional then
-            typedefof<_ option>.MakeGenericType(dotnetType)
-        else
-            dotnetType
-
-    let private nullableOrPlainType (optional: bool) (dotnetType: Type) : Type =
-        if optional then
-            let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
-
-            if dotnetTypeWithoutOption.IsValueType then
-                typedefof<Nullable<_>>.MakeGenericType(dotnetTypeWithoutOption)
-            else
-                dotnetTypeWithoutOption
-        else
-            dotnetType
-
-    let private defaultValueForNullableType (dotnetType: Type) : obj =
-        let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
-
-        if dotnetTypeWithoutOption.IsValueType then
-            Nullable()
-        else
-            null
-
-    let rec private fSharpTypeToMethodParameterType
-        (classMap: Map<string, ProvidedTypeDefinition>)
-        (optional: bool)
-        (fSharpType: FSharpType)
-        : Type =
-        let dotnetType = fSharpTypeToCompileTimeType classMap fSharpType
-        nullableOrPlainType optional dotnetType
 
     let private createProvidedProperties
         (classMap: Map<string, ProvidedTypeDefinition>)
@@ -113,7 +54,7 @@ module TypeProvider =
               ProvidedProperty(
                   propertyName = name,
                   propertyType = optionalOrPlainType optional plainPropertyCompileTimeType,
-                  getterCode = generatePropertyGetter plainPropertyRuntimeType property
+                  getterCode = generatePropertyGetter classMap property
               ) ]
 
     let private createProvidedCreateMethod
