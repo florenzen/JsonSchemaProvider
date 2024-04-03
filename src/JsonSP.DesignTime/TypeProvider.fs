@@ -26,8 +26,8 @@ namespace JsonSP.DesignTime
 module TypeProvider =
     open System
     open System.Reflection
-    open SchemaRep
-    open TypeLevelConversions
+    open SchemaConversion
+    open TypeLevelConversion
     open ExprGenerator
     open ProviderImplementation.ProvidedTypes
     open NJsonSchema

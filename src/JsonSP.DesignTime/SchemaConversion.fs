@@ -23,7 +23,7 @@
 
 namespace JsonSP.DesignTime
 
-module SchemaRep =
+module SchemaConversion =
     open NJsonSchema
     open JsonSchemaProvider
 
