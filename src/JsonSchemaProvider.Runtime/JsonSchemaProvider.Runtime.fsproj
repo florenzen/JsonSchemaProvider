@@ -9,7 +9,7 @@
   <PropertyGroup>
     <PackageId>JsonSchemaProvider</PackageId>
     <Title>JsonSchemaProvider: F# type provider for JSON schema</Title>
-    <Copyright>Copyright (c) 2023 Florian Lorenzen</Copyright>
+    <Copyright>Copyright (c) 2024 Florian Lorenzen</Copyright>
     <Description>The JsonSchemaProvider provides F# types from JSON schemas. It can be used to build
 JSON values in a strongly typed way that conform to the schema or to parse JSON values into an F# value that
 can be queried in a stringly types way. Specifications like numeric ranges or string patterns that cannot be
