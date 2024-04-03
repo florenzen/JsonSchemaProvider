@@ -23,8 +23,8 @@
 
 namespace JsonSP.Tests
 
-module SchemaRepTests =
-    open JsonSP.DesignTime.SchemaRep
+module SchemaConversionTests =
+    open JsonSP.DesignTime.SchemaConversion
     open Expecto
 
     [<Literal>]

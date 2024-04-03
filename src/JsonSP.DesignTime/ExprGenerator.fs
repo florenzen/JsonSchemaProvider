@@ -28,8 +28,8 @@ module ExprGenerator =
     open FSharp.Quotations.Patterns
     open FSharp.Reflection
     open FSharp.Data
-    open SchemaRep
-    open TypeLevelConversions
+    open SchemaConversion
+    open TypeLevelConversion
     open JsonSchemaProvider
     open System
     open System.Reflection

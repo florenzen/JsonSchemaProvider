@@ -23,9 +23,9 @@
 
 namespace JsonSP.DesignTime
 
-module TypeLevelConversions =
+module TypeLevelConversion =
     open System
-    open SchemaRep
+    open SchemaConversion
     open ProviderImplementation.ProvidedTypes
     open JsonSchemaProvider
 
