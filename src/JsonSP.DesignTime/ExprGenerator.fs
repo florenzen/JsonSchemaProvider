@@ -202,26 +202,26 @@ module ExprGenerator =
         (schemaSource: string)
         (properties: FSharpProperty list)
         : Expr list -> Expr =
-        fun (args: Expr list) ->
-            let properties: Expr =
-                // [| for arg in args -> |]
-                failwith "nyi"
+        fun (args: Expr list) -> <@@ failwith "nyi" @@>
+// let properties: Expr =
+//     // [| for arg in args -> |]
+//     failwith "nyi"
 
-            <@@
-                let record = NullableJsonValue(JsonValue.Record(Array.concat %%properties))
-                let recordSource = record.ToString()
+// <@@
+//     let record = NullableJsonValue(JsonValue.Record(Array.concat %%properties))
+//     let recordSource = record.ToString()
 
-                let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
+//     let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
 
-                let validationErrors = schema.Validate(recordSource)
+//     let validationErrors = schema.Validate(recordSource)
 
-                if Seq.isEmpty validationErrors then
-                    record
-                else
-                    let message =
-                        validationErrors
-                        |> Seq.map (fun validationError -> validationError.ToString())
-                        |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+//     if Seq.isEmpty validationErrors then
+//         record
+//     else
+//         let message =
+//             validationErrors
+//             |> Seq.map (fun validationError -> validationError.ToString())
+//             |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
 
-                    raise (System.ArgumentException(message, recordSource))
-            @@>
+//         raise (System.ArgumentException(message, recordSource))
+// @@>

@@ -92,20 +92,20 @@ module SchemaConversion =
           Properties: FSharpProperty list
           NestedClasses: FSharpClassTree list }
 
-    let rec private jsonPropertyToFSharpPropertyAndInnerClass
+    let rec private jsonPropertyToFSharpPropertyAndNestedClass
         ({ Name = propertyName
            Optional = optional
            PropertyType = propertyType }: JsonProperty)
         : FSharpProperty * FSharpClassTree option =
         let (fSharpType, maybeClass) =
-            jsonSchemaTypeToFSharpTypeAndInnerClass propertyName propertyType
+            jsonSchemaTypeToFSharpTypeAndNestedClass propertyName propertyType
 
         ({ Name = propertyName
            Optional = optional
            FSharpType = fSharpType },
          maybeClass)
 
-    and private jsonSchemaTypeToFSharpTypeAndInnerClass
+    and private jsonSchemaTypeToFSharpTypeAndNestedClass
         (lhsName: string)
         (jsonSchemaType: JsonSchemaType)
         : FSharpType * FSharpClassTree option =
@@ -114,7 +114,7 @@ module SchemaConversion =
         | JsonObject(properties) -> (FSharpClass(lhsName), Some(jsonPropertyListToFSharpClassTree lhsName properties))
         | JsonArray(innerType) ->
             let (innerFSharpType, maybeClass) =
-                jsonSchemaTypeToFSharpTypeAndInnerClass lhsName innerType
+                jsonSchemaTypeToFSharpTypeAndNestedClass lhsName innerType
 
             (FSharpList(innerFSharpType), maybeClass)
         | JsonInteger -> (FSharpInt, None)
@@ -125,16 +125,16 @@ module SchemaConversion =
         (lhsName: string)
         (jsonProperties: JsonProperty list)
         : FSharpClassTree =
-        let (fSharpProperties, maybeSubClasses) =
+        let (fSharpProperties, maybeNestedClasses) =
             jsonProperties
-            |> List.map jsonPropertyToFSharpPropertyAndInnerClass
+            |> List.map jsonPropertyToFSharpPropertyAndNestedClass
             |> List.unzip
 
-        let subClasses = maybeSubClasses |> List.map Option.toList |> List.concat
+        let nestedClasses = maybeNestedClasses |> List.map Option.toList |> List.concat
 
         { Name = lhsName
           Properties = fSharpProperties
-          NestedClasses = subClasses }
+          NestedClasses = nestedClasses }
 
     let jsonObjectToFSharpClassTree (lhsName: string) (jsonSchemaType: JsonSchemaType) : FSharpClassTree =
         match jsonSchemaType with

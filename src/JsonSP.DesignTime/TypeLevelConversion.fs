@@ -62,27 +62,20 @@ module TypeLevelConversion =
 
     let nullableOrPlainType (optional: bool) (dotnetType: Type) : Type =
         if optional then
-            let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
-
-            if dotnetTypeWithoutOption.IsValueType then
-                typedefof<Nullable<_>>.MakeGenericType(dotnetTypeWithoutOption)
+            if dotnetType.IsValueType then
+                typedefof<Nullable<_>>.MakeGenericType(dotnetType)
             else
-                dotnetTypeWithoutOption
+                dotnetType
         else
             dotnetType
 
-    let defaultValueForNullableType (dotnetType: Type) : obj =
-        let dotnetTypeWithoutOption = dotnetType.GenericTypeArguments[0]
-
-        if dotnetTypeWithoutOption.IsValueType then
-            Nullable()
-        else
-            null
+    let defaultValueForNullableType (compileTimeType: Type) : obj =
+        if compileTimeType.IsValueType then Nullable() else null
 
     let rec fSharpTypeToMethodParameterType
         (classMap: Map<string, ProvidedTypeDefinition>)
         (optional: bool)
         (fSharpType: FSharpType)
         : Type =
-        let dotnetType = fSharpTypeToCompileTimeType classMap fSharpType
-        nullableOrPlainType optional dotnetType
+        let compileTimeType = fSharpTypeToCompileTimeType classMap fSharpType
+        nullableOrPlainType optional compileTimeType

@@ -66,7 +66,7 @@ module TypeProvider =
         let parameters =
             [ for property in properties ->
                   let parameterType =
-                      fSharpTypeToMethodParameterType classMap (property.Optional) property.FSharpType
+                      fSharpTypeToMethodParameterType classMap property.Optional property.FSharpType
 
                   if property.Optional then
                       ProvidedParameter(property.Name, parameterType, false, defaultValueForNullableType parameterType)
@@ -130,13 +130,13 @@ module TypeProvider =
         { Name = className
           Properties = properties
           NestedClasses = nestedClasses }
-        (innerClass: bool)
+        (nestedClass: bool)
         : ProvidedTypeDefinition =
         let providedTypeDefinition =
             ProvidedTypeDefinition(
                 providedTypeData.Assembly,
                 providedTypeData.NamespaceName,
-                className + (if innerClass then "Obj" else ""),
+                className + (if nestedClass then "Obj" else ""),
                 Some(providedTypeData.RuntimeType)
             )
 
@@ -153,12 +153,12 @@ module TypeProvider =
         providedProperties
         |> List.iter (fun providedProperty -> providedTypeDefinition.AddMember(providedProperty))
 
-        // let createMethod =
-        //     createProvidedCreateMethod classMap properties schemaHashCode schemaString providedTypeDefinition
+        let createMethod =
+            createProvidedCreateMethod classMap properties schemaHashCode schemaString providedTypeDefinition
 
-        // providedTypeDefinition.AddMember(createMethod)
+        providedTypeDefinition.AddMember(createMethod)
 
-        if not innerClass then
+        if not nestedClass then
             let parseMethod =
                 createProvidedParseMethod providedTypeDefinition schemaHashCode schemaString
 
