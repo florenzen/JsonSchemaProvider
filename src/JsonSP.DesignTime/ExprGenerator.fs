@@ -36,6 +36,8 @@ module ExprGenerator =
     open ProviderImplementation.ProvidedTypes
 
     module private CommonExprs =
+        let private cannotHappen (): 'T = failwith "Cannot happen."
+
         let private fSharpCore = typeof<List<_>>.Assembly
 
         let private arrayModuleType =
@@ -64,22 +66,22 @@ module ExprGenerator =
         let private nullableJsonValueJsonValPropertyInfo =
             match <@@ NullableJsonValue(JsonValue.Boolean(true)).JsonVal @@> with
             | PropertyGet(_, pi, _) -> pi
-            | _ -> failwith "Cannot happen."
+            | _ -> cannotHappen ()
 
         let private jsonValueItemMethodInfo =
             match <@@ JsonValue.Record(Array.empty)["x"] @@> with
             | Call(_, mi, _) -> mi
-            | _ -> failwith "Cannot happen."
+            | _ -> cannotHappen ()
 
         let private jsonValueTryGetPropertyMethodInfo =
             match <@@ JsonValue.Record(Array.empty).TryGetProperty("x") @@> with
             | Call(_, mi, _) -> mi
-            | _ -> failwith "Cannot happen."
+            | _ -> cannotHappen ()
 
         let private jsonValueAsArrayMethodInfo =
             match <@@ JsonValue.Array(Array.empty).AsArray() @@> with
             | Call(_, mi, _) -> mi
-            | _ -> failwith "Cannot happen."
+            | _ -> cannotHappen ()
 
         let private arrayMapMethodInfo (fromType: Type) (toType: Type) : MethodInfo =
             arrayModuleType.GetMethods()
