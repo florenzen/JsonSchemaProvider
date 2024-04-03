@@ -36,7 +36,7 @@ module ExprGenerator =
     open ProviderImplementation.ProvidedTypes
 
     module private CommonExprs =
-        let private cannotHappen (): 'T = failwith "Cannot happen."
+        let private cannotHappen () : 'T = failwith "Cannot happen."
 
         let private fSharpCore = typeof<List<_>>.Assembly
 

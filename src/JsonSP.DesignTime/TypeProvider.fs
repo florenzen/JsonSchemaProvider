@@ -39,7 +39,6 @@ module TypeProvider =
           NamespaceName: string
           RuntimeType: Type }
 
-
     let private createProvidedProperties
         (classMap: Map<string, ProvidedTypeDefinition>)
         (properties: FSharpProperty list)

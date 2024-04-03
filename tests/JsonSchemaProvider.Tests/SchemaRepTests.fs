@@ -125,110 +125,6 @@ module SchemaRepTests =
 
         }
 
-    let flatObjectShouldLeadToOneClass =
-        test "FlatObject should lead to one class" {
-            let actual =
-                parseJsonSchema flatObject
-                |> jsonSchemaTypeToFSharpRepForProvidedName "FlatObject"
-
-            let expected =
-                { Structure = FSharpClass("FlatObject")
-                  Classes =
-                    [ { Name = ("FlatObject")
-                        Properties =
-                          [ { Name = "X"
-                              Optional = true
-                              FSharpType = FSharpString }
-                            { Name = "Y"
-                              Optional = true
-                              FSharpType = FSharpString }
-                            { Name = "Z"
-                              Optional = true
-                              FSharpType = FSharpInt } ] } ] }
-
-            Expect.equal actual expected ""
-        }
-
-    let nestedArrayWithObjectItemsShouldLeadToTwoClasses =
-        test "NestedArrayWithObjectItems should lead to two classes" {
-            let actual =
-                parseJsonSchema nestedArrayWithObjectItems
-                |> jsonSchemaTypeToFSharpRepForProvidedName "NestedArrayWithObjectItems"
-
-            let expected =
-                { Structure = FSharpClass("NestedArrayWithObjectItems")
-                  Classes =
-                    [ { Name = "NestedArrayWithObjectItems"
-                        Properties =
-                          [ { Name = "values"
-                              Optional = true
-                              FSharpType = FSharpList(FSharpList(FSharpClass("values"))) } ] }
-                      { Name = "values"
-                        Properties =
-                          [ { Name = "propA"
-                              Optional = true
-                              FSharpType = FSharpInt }
-                            { Name = "propB"
-                              Optional = true
-                              FSharpType = FSharpString } ] } ] }
-
-            Expect.equal actual expected ""
-        }
-
-    let nestedObjectsShouldLeadToFourClasses =
-        test "NestedObjects should lead to four classes" {
-            let actual =
-                parseJsonSchema nestedObjects
-                |> jsonSchemaTypeToFSharpRepForProvidedName "NestedObjects"
-
-            let expected =
-                { Structure = FSharpClass("NestedObjects")
-                  Classes =
-                    [ { Name = "NestedObjects"
-                        Properties =
-                          [ { Name = "header"
-                              Optional = true
-                              FSharpType = FSharpClass("header") }
-                            { Name = "body"
-                              Optional = false
-                              FSharpType = FSharpClass("body") } ] }
-                      { Name = "header"
-                        Properties =
-                          [ { Name = "id"
-                              Optional = false
-                              FSharpType = FSharpInt }
-                            { Name = "sender"
-                              Optional = false
-                              FSharpType = FSharpString }
-                            { Name = "resend"
-                              Optional = true
-                              FSharpType = FSharpBool }
-                            { Name = "time"
-                              Optional = true
-                              FSharpType = FSharpClass("time") } ] }
-                      { Name = "time"
-                        Properties =
-                          [ { Name = "hour"
-                              Optional = false
-                              FSharpType = FSharpInt }
-                            { Name = "minute"
-                              Optional = false
-                              FSharpType = FSharpInt }
-                            { Name = "second"
-                              Optional = false
-                              FSharpType = FSharpInt } ] }
-                      { Name = "body"
-                        Properties =
-                          [ { Name = "length"
-                              Optional = false
-                              FSharpType = FSharpInt }
-                            { Name = "payload"
-                              Optional = false
-                              FSharpType = FSharpString } ] } ] }
-
-            Expect.equal actual expected ""
-        }
-
     let nestedObjectsShouldBeClassTreeWithFourClasses =
         test "NestedObjects should be class tree with four classes" {
             let actual =
@@ -315,8 +211,5 @@ module SchemaRepTests =
         testList
             "JsonSP.Tests"
             [ nestedArrayWithObjectItemsShouldBeParsedCorrectly
-              flatObjectShouldLeadToOneClass
-              nestedArrayWithObjectItemsShouldLeadToTwoClasses
               nestedArrayWithObjectItemsShouldBeClassTreeWithTwoClasses
-              nestedObjectsShouldLeadToFourClasses
               nestedObjectsShouldBeClassTreeWithFourClasses ]
