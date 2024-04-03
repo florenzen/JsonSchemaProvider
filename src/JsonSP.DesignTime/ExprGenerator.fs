@@ -55,10 +55,10 @@ module ExprGenerator =
 
         let private optionValuePropertyInfo (elementType: Type) : PropertyInfo = optionPropertyInfo elementType "Value"
 
-        let private optionSomeUnionCaseInfo (elementType: Type) =
+        let private optionSomeUnionCaseInfo (elementType: Type) : UnionCaseInfo =
             FSharpType.GetUnionCases(typedefof<_ option>.MakeGenericType(elementType))[1]
 
-        let private optionNoneUnionCaseInfo (elementType: Type) =
+        let private optionNoneUnionCaseInfo (elementType: Type) : UnionCaseInfo =
             FSharpType.GetUnionCases(typedefof<_ option>.MakeGenericType(elementType))[0]
 
         let private nullableJsonValueJsonValPropertyInfo =
