@@ -1,5 +1,4 @@
 // Copyright (c) 2024 Florian Lorenzen
-
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
 // files (the “Software”), to deal in the Software without
@@ -57,11 +56,22 @@ module ExprGenerator =
 
         let private optionValuePropertyInfo (elementType: Type) : PropertyInfo = optionPropertyInfo elementType "Value"
 
+        let private nullableHasValuePropertyInfo (elementType: Type) : PropertyInfo =
+            let nullableType = (typedefof<Nullable<_>>).MakeGenericType([| elementType |])
+            let properties = nullableType.GetProperties()
+            let pi = properties |> Array.filter (fun pi -> pi.Name = "HasValue") |> Array.head
+            pi
+
         let private optionSomeUnionCaseInfo (elementType: Type) : UnionCaseInfo =
             FSharpType.GetUnionCases(typedefof<_ option>.MakeGenericType(elementType))[1]
 
         let private optionNoneUnionCaseInfo (elementType: Type) : UnionCaseInfo =
             FSharpType.GetUnionCases(typedefof<_ option>.MakeGenericType(elementType))[0]
+
+        let private jsonValueArrayUnionCaseInfo: UnionCaseInfo =
+            FSharpType.GetUnionCases(typeof<JsonValue>)
+            |> Array.filter (fun uc -> uc.Name = "Array")
+            |> Array.head
 
         let private nullableJsonValueJsonValPropertyInfo =
             match <@@ NullableJsonValue(JsonValue.Boolean(true)).JsonVal @@> with
@@ -88,10 +98,25 @@ module ExprGenerator =
             |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
             |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(fromType, toType)
 
+        let private arrayOfListMethodInfo (elementType: Type) : MethodInfo =
+            arrayModuleType.GetMethods()
+            |> Array.find (fun methodInfo -> methodInfo.Name = "OfList")
+            |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(elementType)
+
+        let private listMapMethodInfo (fromType: Type) (toType: Type) : MethodInfo =
+            listModuleType.GetMethods()
+            |> Array.find (fun methodInfo -> methodInfo.Name = "Map")
+            |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(fromType, toType)
+
         let private listOfArryMethodInfo (elementType: Type) : MethodInfo =
             listModuleType.GetMethods()
             |> Array.find (fun methodInfo -> methodInfo.Name = "OfArray")
             |> fun genericMethodInfo -> genericMethodInfo.MakeGenericMethod(elementType)
+
+        let private opEqualityMethodInfo =
+            match <@@ (=) @@> with
+            | Lambda(_, Lambda(_, Call(_, mi, _))) -> mi
+            | _ -> cannotHappen ()
 
         let getOptionIsSome (elementType: Type) (receiver: Expr) : Expr =
             let pi = optionIsSomePropertyInfo elementType
@@ -101,6 +126,9 @@ module ExprGenerator =
         let getOptionValue (elementType: Type) (receiver: Expr) : Expr =
             Expr.PropertyGet(receiver, optionValuePropertyInfo elementType)
 
+        let getNullableHasValue (elementType: Type) (receiver: Expr) : Expr =
+            Expr.PropertyGet(receiver, nullableHasValuePropertyInfo elementType)
+
         let getNullableJsonValueJsonVal (receiver: Expr) : Expr =
             Expr.PropertyGet(receiver, nullableJsonValueJsonValPropertyInfo)
 
@@ -109,6 +137,9 @@ module ExprGenerator =
 
         let newOptionNone (elementType: Type) : Expr =
             Expr.NewUnionCase(optionNoneUnionCaseInfo elementType, [])
+
+        let newJsonValueArray (arg: Expr) : Expr =
+            Expr.NewUnionCase(jsonValueArrayUnionCaseInfo, [ arg ])
 
         let callJsonValueItem (receiver: Expr) (name: string) : Expr =
             Expr.Call(jsonValueItemMethodInfo, [ receiver; Expr.Value(name) ])
@@ -122,10 +153,19 @@ module ExprGenerator =
         let callArrayMap (func: Expr) (array: Expr) (fromType: Type) (toType: Type) : Expr =
             Expr.Call(arrayMapMethodInfo fromType toType, [ func; array ])
 
+        let callArrayOfList (list: Expr) (elementType: Type) : Expr =
+            Expr.Call(arrayOfListMethodInfo elementType, [ list ])
+
         let callListOfArray (array: Expr) (elementType: Type) : Expr =
             Expr.Call(listOfArryMethodInfo elementType, [ array ])
 
-    let rec private generateJsonValToTypedObject
+        let callListMap (func: Expr) (list: Expr) (fromType: Type) (toType: Type) : Expr =
+            Expr.Call(listMapMethodInfo fromType toType, [ func; list ])
+
+        let callOpEquality (lhs: Expr) (rhs: Expr) : Expr =
+            Expr.Call(opEqualityMethodInfo, [ lhs; rhs ])
+
+    let rec private generateJsonValToRuntimeTypeConversion
         (classMap: Map<string, ProvidedTypeDefinition>)
         (fSharpType: FSharpType)
         : Expr =
@@ -134,9 +174,9 @@ module ExprGenerator =
         | FSharpClass(_) -> <@@ fun (jsonVal: JsonValue) -> NullableJsonValue(jsonVal) @@>
         | FSharpList(innerType) ->
             // <@@ fun (jsonVal: JsonValue) -> List.ofArray (Array.map %%generateForInner (jsonVal.AsArray())) @@>
-            let generateForInner = generateJsonValToTypedObject classMap innerType
+            let generateForInner = generateJsonValToRuntimeTypeConversion classMap innerType
             let innerRuntimeType = fSharpTypeToRuntimeType classMap innerType
-            let jsonValVar = Var("jsonVal", typeof<JsonValue>)
+            let jsonValVar = Var($"jsonVal{Guid.NewGuid()}", typeof<JsonValue>)
             let jsonValAsArray = CommonExprs.callJsonValueAsArray (Expr.Var(jsonValVar))
 
             let mappedArray =
@@ -148,6 +188,45 @@ module ExprGenerator =
         | FSharpInt -> <@@ fun (jsonVal: JsonValue) -> jsonVal.AsInteger() @@>
         | FSharpString -> <@@ fun (jsonVal: JsonValue) -> jsonVal.AsString() @@>
 
+    let rec private generateRuntimeTypeToJsonValConversion
+        (classMap: Map<string, ProvidedTypeDefinition>)
+        (optional: bool)
+        (fSharpType: FSharpType)
+        : Expr =
+        match fSharpType with
+        | FSharpBool ->
+            if optional then
+                <@@ fun (runtimeObj: Nullable<bool>) -> JsonValue.Boolean(runtimeObj.Value) @@>
+            else
+                <@@ fun (runtimeObj: bool) -> JsonValue.Boolean(runtimeObj) @@>
+        | FSharpClass(_) -> <@@ fun (runtimeObj: NullableJsonValue) -> runtimeObj.JsonVal @@>
+        | FSharpList(innerType) ->
+            // <@@ fun runtimeObj -> Array.ofList (List.map %%generatoreForInner runtimeObj)@@>
+            let generateForInner =
+                generateRuntimeTypeToJsonValConversion classMap false innerType
+
+            let innerRuntimeType = fSharpTypeToRuntimeType classMap innerType
+            let listRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
+
+            let runtimeObjVar = Var($"runtimeObj{Guid.NewGuid}", listRuntimeType)
+
+            let mappedList =
+                CommonExprs.callListMap generateForInner (Expr.Var(runtimeObjVar)) innerRuntimeType typeof<JsonValue>
+
+            let listAsArray = CommonExprs.callArrayOfList mappedList typeof<JsonValue>
+            Expr.Lambda(runtimeObjVar, CommonExprs.newJsonValueArray listAsArray)
+        | FSharpDouble ->
+            if optional then
+                <@@ fun (runtimeObj: Nullable<double>) -> JsonValue.Float(runtimeObj.Value) @@>
+            else
+                <@@ fun (runtimeObj: double) -> JsonValue.Float(runtimeObj) @@>
+        | FSharpInt ->
+            if optional then
+                <@@ fun (runtimeObj: Nullable<int>) -> JsonValue.Number(decimal runtimeObj.Value) @@>
+            else
+                <@@ fun (runtimeObj: int) -> JsonValue.Number(decimal runtimeObj) @@>
+        | FSharpString -> <@@ fun (runtimeObj: string) -> JsonValue.String(runtimeObj) @@>
+
     let rec private generateTypedObjectToJsonVal () : Expr = failwith "nyi"
 
     let generatePropertyGetter
@@ -157,7 +236,9 @@ module ExprGenerator =
           FSharpType = fSharpType }
         : Expr list -> Expr =
         let plainPropertyRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
-        let convertToRuntimeType = generateJsonValToTypedObject classMap fSharpType
+
+        let convertToRuntimeType =
+            generateJsonValToRuntimeTypeConversion classMap fSharpType
 
         if optional then
             fun (args: Expr list) ->
@@ -170,7 +251,7 @@ module ExprGenerator =
                 //     Some(%%conversion maybeProperty.Value)
                 // else
                 //     None
-                let scrutineeVar = Var("maybeProperty", typeof<JsonValue option>)
+                let scrutineeVar = Var($"maybeProperty{Guid.NewGuid()}", typeof<JsonValue option>)
                 let jsonVal = CommonExprs.getNullableJsonValueJsonVal args[0]
                 let maybePropertySelect = CommonExprs.callJsonValueTryGetPropertyName jsonVal name
 
@@ -198,30 +279,79 @@ module ExprGenerator =
                 Expr.Application(convertToRuntimeType, propertySelect)
 
     let generateCreateInvokeCode
+        (classMap: Map<string, ProvidedTypeDefinition>)
         (schemaHashCode: int32)
         (schemaSource: string)
         (properties: FSharpProperty list)
         : Expr list -> Expr =
-        fun (args: Expr list) -> <@@ failwith "nyi" @@>
-// let properties: Expr =
-//     // [| for arg in args -> |]
-//     failwith "nyi"
+        fun (args: Expr list) ->
+            let elementType = typedefof<(string * JsonValue)[]>
+            // TODO improve structure here
+            let nullcheck (fSharpType: FSharpType) (arg: Expr) : Expr =
+                match fSharpType with
+                | FSharpBool -> CommonExprs.getNullableHasValue typeof<bool> arg
+                | FSharpInt -> CommonExprs.getNullableHasValue typeof<int> arg
+                | FSharpDouble -> CommonExprs.getNullableHasValue typeof<double> arg
+                | _ -> CommonExprs.callOpEquality arg (Expr.Value(null))
 
-// <@@
-//     let record = NullableJsonValue(JsonValue.Record(Array.concat %%properties))
-//     let recordSource = record.ToString()
+            let makeField (name: string) (optional: bool) (fSharpType: FSharpType) (arg: Expr) =
+                if optional then
+                    let condition = nullcheck fSharpType arg
 
-//     let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
+                    let thenBranch = Expr.NewArray(typeof<string * JsonValue>, [])
 
-//     let validationErrors = schema.Validate(recordSource)
+                    let elseBranch =
+                        Expr.NewArray(
+                            typeof<string * JsonValue>,
+                            [ Expr.NewTuple(
+                                  [ Expr.Value(name)
+                                    Expr.Application(
+                                        generateRuntimeTypeToJsonValConversion classMap optional fSharpType,
+                                        arg
+                                    ) ]
+                              ) ]
+                        )
 
-//     if Seq.isEmpty validationErrors then
-//         record
-//     else
-//         let message =
-//             validationErrors
-//             |> Seq.map (fun validationError -> validationError.ToString())
-//             |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+                    Expr.IfThenElse(condition, thenBranch, elseBranch)
+                else
+                    Expr.NewArray(
+                        typeof<string * JsonValue>,
+                        [ Expr.NewTuple(
+                              [ Expr.Value(name)
+                                Expr.Application(
+                                    generateRuntimeTypeToJsonValConversion classMap optional fSharpType,
+                                    arg
+                                ) ]
+                          ) ]
+                    )
 
-//         raise (System.ArgumentException(message, recordSource))
-// @@>
+            let elements =
+                [ for ({ Name = name
+                         Optional = optional
+                         FSharpType = fSharpType },
+                       arg) in List.zip properties args -> makeField name optional fSharpType arg ]
+
+            let fields = Expr.NewArray(elementType, elements)
+            // [| for ({Name=name;Optional=optional;FSharpType=fSHarpType}, arg) in List.zip (properties, args) -> failwith "nyi" |]
+            // properties is array of 0/1-element arrays
+            <@@
+                let record =
+                    NullableJsonValue(JsonValue.Record(Array.concat ((%%fields): (string * JsonValue)[][])))
+
+                let recordSource = record.ToString()
+
+                let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
+
+                let validationErrors = schema.Validate(recordSource)
+
+                // TODO header/body verification fails
+                // if Seq.isEmpty validationErrors then
+                record
+            // else
+            //     let message =
+            //         validationErrors
+            //         |> Seq.map (fun validationError -> validationError.ToString())
+            //         |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
+
+            //     raise (ArgumentException(message, recordSource))
+            @@>
