@@ -77,7 +77,7 @@ module TypeProvider =
             methodName = "Create",
             parameters = parameters,
             returnType = providedTypeDefinition,
-            invokeCode = generateCreateInvokeCode schemaHashCode schemaString properties,
+            invokeCode = generateCreateInvokeCode classMap schemaHashCode schemaString properties,
             isStatic = true
         )
 
