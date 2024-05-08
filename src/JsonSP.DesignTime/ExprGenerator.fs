@@ -78,6 +78,11 @@ module ExprGenerator =
             | PropertyGet(_, pi, _) -> pi
             | _ -> cannotHappen ()
 
+        let private opNotMethodInfo =
+            match <@@ not true @@> with
+            | Call(_, mi, _) -> mi
+            | _ -> cannotHappen ()
+
         let private jsonValueItemMethodInfo =
             match <@@ JsonValue.Record(Array.empty)["x"] @@> with
             | Call(_, mi, _) -> mi
@@ -164,6 +169,8 @@ module ExprGenerator =
 
         let callOpEquality (lhs: Expr) (rhs: Expr) : Expr =
             Expr.Call(opEqualityMethodInfo, [ lhs; rhs ])
+
+        let callOpNot (arg: Expr) : Expr = Expr.Call(opNotMethodInfo, [ arg ])
 
     let rec private generateJsonValToRuntimeTypeConversion
         (classMap: Map<string, ProvidedTypeDefinition>)
@@ -287,16 +294,16 @@ module ExprGenerator =
         fun (args: Expr list) ->
             let elementType = typedefof<(string * JsonValue)[]>
             // TODO improve structure here
-            let nullcheck (fSharpType: FSharpType) (arg: Expr) : Expr =
+            let isNullCheck (fSharpType: FSharpType) (arg: Expr) : Expr =
                 match fSharpType with
-                | FSharpBool -> CommonExprs.getNullableHasValue typeof<bool> arg
-                | FSharpInt -> CommonExprs.getNullableHasValue typeof<int> arg
-                | FSharpDouble -> CommonExprs.getNullableHasValue typeof<double> arg
+                | FSharpBool -> CommonExprs.callOpNot (CommonExprs.getNullableHasValue typeof<bool> arg)
+                | FSharpInt -> CommonExprs.callOpNot (CommonExprs.getNullableHasValue typeof<int> arg)
+                | FSharpDouble -> CommonExprs.callOpNot (CommonExprs.getNullableHasValue typeof<double> arg)
                 | _ -> CommonExprs.callOpEquality arg (Expr.Value(null))
 
             let makeField (name: string) (optional: bool) (fSharpType: FSharpType) (arg: Expr) =
                 if optional then
-                    let condition = nullcheck fSharpType arg
+                    let condition = isNullCheck fSharpType arg
 
                     let thenBranch = Expr.NewArray(typeof<string * JsonValue>, [])
 
