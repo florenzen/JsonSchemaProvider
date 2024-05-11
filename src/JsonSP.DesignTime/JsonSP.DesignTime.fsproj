@@ -21,6 +21,7 @@
     <Compile Include="..\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fs" />
     <Compile Include="SchemaConversion.fs" />
     <Compile Include="TypeLevelConversion.fs" />
+    <Compile Include="CommonExprs.fs" />
     <Compile Include="ExprGenerator.fs" />
     <Compile Include="TypeProvider.fs" />
     <Compile Include="JsonSPImpl.fs" />
