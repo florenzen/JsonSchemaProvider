@@ -24,6 +24,6 @@
     <Compile Include="CommonExprs.fs" />
     <Compile Include="ExprGenerator.fs" />
     <Compile Include="TypeProvider.fs" />
-    <Compile Include="JsonSPImpl.fs" />
+    <Compile Include="JsonSchemaProviderImpl.fs" />
   </ItemGroup>
 </Project>

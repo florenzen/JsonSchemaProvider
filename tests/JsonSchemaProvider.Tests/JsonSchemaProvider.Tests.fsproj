@@ -18,6 +18,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fsproj" />
-    <ProjectReference Include="..\..\src\JsonSP.DesignTime\JsonSP.DesignTime.fsproj" />
+    <ProjectReference Include="..\..\src\JsonSchemaProvider.DesignTime\JsonSchemaProvider.DesignTime.fsproj" />
   </ItemGroup>
 </Project>

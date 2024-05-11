@@ -21,7 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-namespace JsonSP.DesignTime
+namespace JsonSchemaProvider.DesignTime
 
 open System.IO
 open System.Reflection
@@ -30,15 +30,15 @@ open ProviderImplementation.ProvidedTypes
 open JsonSchemaProvider
 
 [<TypeProvider>]
-type JsonSPImpl(config: TypeProviderConfig) as this =
+type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     inherit
         TypeProviderForNamespaces(
             config,
-            assemblyReplacementMap = [ ("JsonSP.DesignTime", "JsonSchemaProvider.Runtime") ],
+            assemblyReplacementMap = [ ("JsonSchemaProvider.DesignTime", "JsonSchemaProvider.Runtime") ],
             addDefaultProbingLocation = true
         )
 
-    let namespaceName = "JsonSP"
+    let namespaceName = "JsonSchemaProvider"
     let thisAssembly = Assembly.GetExecutingAssembly()
 
     let staticParams =
