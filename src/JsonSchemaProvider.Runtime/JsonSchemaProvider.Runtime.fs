@@ -57,6 +57,6 @@ module SchemaCache =
             schema
 
 #if !IS_DESIGNTIME
-[<assembly: FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSP.DesignTime")>]
+[<assembly: FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
 do ()
 #endif

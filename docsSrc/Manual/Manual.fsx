@@ -8,7 +8,7 @@ index: 1
 *)
 
 (*** condition: prepare ***)
-#r "../../src/JsonSP.DesignTime/bin/Debug/netstandard2.1/JsonSP.DesignTime.dll"
+#r "../../src/JsonSchemaProvider.DesignTime/bin/Debug/netstandard2.1/JsonSchemaProvider.DesignTime.dll"
 #r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/JsonSchemaProvider.Runtime.dll"
 #r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/FSharp.Data.Json.Core.dll"
 #r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/NJsonSchema.dll"
@@ -76,7 +76,7 @@ the `JsonSchemaProvider` via the `schema` argument to provide a type
 from that schema (`Xyz` in this case):
 *)
 
-open JsonSP
+open JsonSchemaProvider
 
 [<Literal>]
 let schema =

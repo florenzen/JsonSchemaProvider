@@ -48,7 +48,7 @@ and uses the JsonValue data type from FSharp.Data.</Description>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JsonSP.DesignTime\JsonSP.DesignTime.fsproj">
+    <ProjectReference Include="..\JsonSchemaProvider.DesignTime\JsonSchemaProvider.DesignTime.fsproj">
       <IsFSharpDesignTimeProvider>true</IsFSharpDesignTimeProvider>
       <PrivateAssets>all</PrivateAssets>
     </ProjectReference>

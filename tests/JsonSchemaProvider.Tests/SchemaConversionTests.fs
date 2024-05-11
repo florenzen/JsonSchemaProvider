@@ -21,10 +21,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-namespace JsonSP.Tests
+namespace JsonSchemaProvider.Tests
 
 module SchemaConversionTests =
-    open JsonSP.DesignTime.SchemaConversion
+    open JsonSchemaProvider.DesignTime.SchemaConversion
     open Expecto
 
     [<Literal>]
@@ -209,7 +209,7 @@ module SchemaConversionTests =
     [<Tests>]
     let tests =
         testList
-            "JsonSP.Tests"
+            "JsonSchemaProvider.Tests.SchemaConversionTests"
             [ nestedArrayWithObjectItemsShouldBeParsedCorrectly
               nestedArrayWithObjectItemsShouldBeClassTreeWithTwoClasses
               nestedObjectsShouldBeClassTreeWithFourClasses ]

@@ -21,7 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-namespace JsonSP.DesignTime
+namespace JsonSchemaProvider.DesignTime
 
 module ExprGenerator =
     open FSharp.Quotations
