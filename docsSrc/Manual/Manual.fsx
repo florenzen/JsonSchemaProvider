@@ -379,9 +379,7 @@ let beginEndTable =
 The nested arrays in `nestedArrayExample` can be flattened like this, e.g.:
 *)
 
-beginEndTable.cells
-|> List.concat
-|> List.map (fun props -> props.ToString())
+beginEndTable.cells |> List.concat |> List.map (fun props -> props.ToString())
 (*** include-fsi-output ***)
 
 (**
