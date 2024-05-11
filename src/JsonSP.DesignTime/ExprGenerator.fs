@@ -286,6 +286,7 @@ module ExprGenerator =
                 Expr.Application(convertToRuntimeType, propertySelect)
 
     let generateCreateInvokeCode
+        (nestedClass: bool)
         (classMap: Map<string, ProvidedTypeDefinition>)
         (schemaHashCode: int32)
         (schemaSource: string)
@@ -345,20 +346,21 @@ module ExprGenerator =
                 let record =
                     NullableJsonValue(JsonValue.Record(Array.concat ((%%fields): (string * JsonValue)[][])))
 
-                let recordSource = record.ToString()
+                if nestedClass then
+                    record
+                else
+                    let recordSource = record.ToString()
 
-                let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
+                    let schema = SchemaCache.retrieveSchema schemaHashCode schemaSource
+                    let validationErrors = schema.Validate(recordSource)
 
-                let validationErrors = schema.Validate(recordSource)
+                    if Seq.isEmpty validationErrors then
+                        record
+                    else
+                        let message =
+                            validationErrors
+                            |> Seq.map (fun validationError -> validationError.ToString())
+                            |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
 
-                // TODO header/body verification fails
-                // if Seq.isEmpty validationErrors then
-                record
-            // else
-            //     let message =
-            //         validationErrors
-            //         |> Seq.map (fun validationError -> validationError.ToString())
-            //         |> fun msgs -> System.String.Join(", ", msgs) |> sprintf "JSON Schema validation failed: %s"
-
-            //     raise (ArgumentException(message, recordSource))
+                        raise (ArgumentException(message, recordSource))
             @@>
