@@ -8,7 +8,7 @@ index: 1
 *)
 
 (*** condition: prepare ***)
-#r "../../src/JsonSchemaProvider.DesignTime/bin/Debug/netstandard2.1/JsonSchemaProvider.DesignTime.dll"
+#r "../../src/JsonSP.DesignTime/bin/Debug/netstandard2.1/JsonSP.DesignTime.dll"
 #r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/JsonSchemaProvider.Runtime.dll"
 #r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/FSharp.Data.Json.Core.dll"
 #r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/NJsonSchema.dll"
@@ -56,7 +56,7 @@ mapped to:
 | `boolean`            | `bool`      |
 | `integer`            | `int`       |
 | `number`             | `float`     |
-| `array`              | array       |
+| `array`              | list        |
 | `object`             | class       |
 *)
 
@@ -76,24 +76,25 @@ the `JsonSchemaProvider` via the `schema` argument to provide a type
 from that schema (`Xyz` in this case):
 *)
 
-open JsonSchemaProvider
+open JsonSP
 
 [<Literal>]
 let schema =
-    """{
-  "type": "object",
-  "properties": {
-    "X": {
-      "type": "string"
-    },
-    "Y": {
-      "type": "string"
-    },
-    "Z": {
-      "type": "integer"
-    }
-  }
-}"""
+    """
+    {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "string"
+        },
+        "Y": {
+          "type": "string"
+        },
+        "Z": {
+          "type": "integer"
+        }
+      }
+    }"""
 
 type Xyz = JsonSchemaProvider<schema=schema>
 
@@ -117,6 +118,7 @@ let xz2 = Xyz.Parse("""{"X": "x", "Z": 1}""")
 
 (**
 For instance, the following invalid JSON value will be rejected
+with a message indicating the expected string for the `X` property.
 *)
 
 try
@@ -126,8 +128,6 @@ with :? System.ArgumentException as ex ->
 (*** include-output ***)
 
 (**
-with a message indicating the expected string for the `X` property.
-
 _Note:_ This particular error would have been prevented using the `Create` method
 since assigning an `int` to the `X` property is a static type error. When parsing, this
 error is delayed to runtime, of course.
@@ -140,20 +140,20 @@ Here is an example:
 
 [<Literal>]
 let rangeSchema =
-    """{
-  "type": "object",
-  "properties": {
-    "from": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "to": {
-      "type": "integer",
-      "maximum": 10
-    }
-  }
-}
-"""
+    """
+    {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "to": {
+          "type": "integer",
+          "maximum": 10
+        }
+      }
+    }"""
 
 type Range = JsonSchemaProvider<schema=rangeSchema>
 
@@ -161,6 +161,7 @@ try
     Range.Create(from = 0, ``to`` = 11) |> ignore
 with :? System.ArgumentException as ex ->
     printfn "Error: %s" ex.Message
+(*** include-output ***)
 
 (**
 In the examples so for, the properties were all optional. Required properties cannot
@@ -169,21 +170,21 @@ be omitted in the arguments to `Create` without leading to a compile time error.
 
 [<Literal>]
 let rangeRequiredSchema =
-    """{
-  "type": "object",
-  "properties": {
-    "from": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "to": {
-      "type": "integer",
-      "maximum": 10
-    }
-  },
-  "required": ["from", "to"]
-}
-"""
+    """
+    {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "to": {
+          "type": "integer",
+          "maximum": 10
+        }
+      },
+      "required": ["from", "to"]
+    }"""
 
 type RangeRequired = JsonSchemaProvider<schema=rangeRequiredSchema>
 
@@ -216,15 +217,16 @@ common in the US:
 
 [<Literal>]
 let nameSchema =
-    """{
-  "type": "object",
-  "properties": {
-    "firstName": {"type": "string"},
-    "middleInitials": {"type": "string"},
-    "lastName": {"type": "string"}
-  },
-  "required": ["firstName", "lastName"]
-}"""
+    """
+    {
+      "type": "object",
+      "properties": {
+        "firstName": {"type": "string"},
+        "middleInitials": {"type": "string"},
+        "lastName": {"type": "string"}
+      },
+      "required": ["firstName", "lastName"]
+    }"""
 
 type Name = JsonSchemaProvider<schema=nameSchema>
 
@@ -258,22 +260,22 @@ JSON Schema to store the global position of a city:
 
 [<Literal>]
 let cityPosition =
-    """{
-  "type": "object",
-  "properties": {
-    "city": {"type": "string"},
-    "globalPosition": {
+    """
+    {
       "type": "object",
       "properties": {
-        "lat": {"type": "number"},
-        "lon": {"type": "number"}
+        "city": {"type": "string"},
+        "globalPosition": {
+          "type": "object",
+          "properties": {
+            "lat": {"type": "number"},
+            "lon": {"type": "number"}
+          },
+          "required": ["lat", "lon"]
+        }
       },
-      "required": ["lat", "lon"]
-    }
-  },
-  "required": ["city", "globalPosition"]
-}
-"""
+      "required": ["city", "globalPosition"]
+    }"""
 
 type CityPosition = JsonSchemaProvider<schema=cityPosition>
 
@@ -299,23 +301,93 @@ let berlinLat = berlinPosition.globalPosition.lat
 (**
 ## Arrays
 
-JSON arrays are mapped to F# arrays:
+JSON arrays are mapped to F# lists:
 *)
 
 [<Literal>]
 let temperatures =
-    """{
-  "type": "object",
-  "properties": {
-    "location": {"type": "string"},
-    "values": {
-      "type": "array",
-      "items": {"type": "number"}
-      }
-  },
-  "required": ["location", "values"]
-}"""
+    """
+    {
+      "type": "object",
+      "properties": {
+        "location": {"type": "string"},
+        "values": {
+          "type": "array",
+          "items": {"type": "number"}
+          }
+      },
+      "required": ["location", "values"]
+    }"""
 
 type Temperatures = JsonSchemaProvider<schema=temperatures>
 
-// let temps = Temperatures.Create("Munich", [ 11.0; 12.0; 11.6; 12.1 ])
+let temps = Temperatures.Create("Munich", [ 11.0; 12.0; 11.6; 12.1 ])
+
+(**
+This enables the usual list functionality like, e.g., slicing:
+*)
+for temp in temps.values[1..3] do
+    printfn "%f" temp
+
+(**
+Arrays can be nested:
+*)
+
+[<Literal>]
+let table =
+    """
+    {
+      "type": "object",
+      "properties": {
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "align": {"type": "string"},
+                "content": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "required": ["cells"]
+    }"""
+
+type Table = JsonSchemaProvider<schema=table>
+
+let beginEndTable =
+    Table.Parse(
+        """
+        {
+          "table": [
+            [
+              {"align": "right", "content": "Begin"},
+              {"align": "left", "content": "10:13:00"}
+            ],
+            [
+              {"align": "right", "content": "End"},
+              {"align": "left", "content": "12:15:00"}
+            ]
+          ]
+        }"""
+    )
+
+(**
+The nested arrays in `nestedArrayExample` can be flattened like this, e.g.:
+*)
+
+beginEndTable.cells
+|> List.concat
+|> List.map (fun props -> props.ToString())
+(*** include-fsi-output ***)
+
+(**
+This example also shows that the class name of the objects nested inside the
+arrays is derived from the property name that hosts the arrays. In this case
+it is `cellsObj`:
+*)
+
+Table.cellsObj.Create(align = "left", content = "Stop 1")
