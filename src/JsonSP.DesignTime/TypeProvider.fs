@@ -57,6 +57,7 @@ module TypeProvider =
               ) ]
 
     let private createProvidedCreateMethod
+        (nestedClass: bool)
         (classMap: Map<string, ProvidedTypeDefinition>)
         (properties: FSharpProperty list)
         (schemaHashCode: int32)
@@ -77,7 +78,7 @@ module TypeProvider =
             methodName = "Create",
             parameters = parameters,
             returnType = providedTypeDefinition,
-            invokeCode = generateCreateInvokeCode classMap schemaHashCode schemaString properties,
+            invokeCode = generateCreateInvokeCode nestedClass classMap schemaHashCode schemaString properties,
             isStatic = true
         )
 
@@ -154,7 +155,13 @@ module TypeProvider =
         |> List.iter (fun providedProperty -> providedTypeDefinition.AddMember(providedProperty))
 
         let createMethod =
-            createProvidedCreateMethod classMap properties schemaHashCode schemaString providedTypeDefinition
+            createProvidedCreateMethod
+                nestedClass
+                classMap
+                properties
+                schemaHashCode
+                schemaString
+                providedTypeDefinition
 
         providedTypeDefinition.AddMember(createMethod)
 
