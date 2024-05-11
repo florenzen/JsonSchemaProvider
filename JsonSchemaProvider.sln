@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSchemaProvider.DesignTime", "src\JsonSchemaProvider.DesignTime\JsonSchemaProvider.DesignTime.fsproj", "{56CF4A22-01D7-45E4-BCDC-E3E69A73EDFE}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSchemaProvider.Runtime", "src\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fsproj", "{B8200652-9891-4846-BDC7-579735475AED}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSP.DesignTime", "src\JsonSP.DesignTime\JsonSP.DesignTime.fsproj", "{419D10D2-1C21-4389-AD57-7F86B9F3AA90}"
@@ -24,10 +22,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{56CF4A22-01D7-45E4-BCDC-E3E69A73EDFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56CF4A22-01D7-45E4-BCDC-E3E69A73EDFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56CF4A22-01D7-45E4-BCDC-E3E69A73EDFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56CF4A22-01D7-45E4-BCDC-E3E69A73EDFE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B8200652-9891-4846-BDC7-579735475AED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B8200652-9891-4846-BDC7-579735475AED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8200652-9891-4846-BDC7-579735475AED}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -42,7 +36,6 @@ Global
 		{B2E00AAF-5EC5-434B-A36C-F27C5ABA1046}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{56CF4A22-01D7-45E4-BCDC-E3E69A73EDFE} = {3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}
 		{B8200652-9891-4846-BDC7-579735475AED} = {3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}
 		{419D10D2-1C21-4389-AD57-7F86B9F3AA90} = {3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}
 		{B2E00AAF-5EC5-434B-A36C-F27C5ABA1046} = {354C1F78-6C4E-46CA-92FA-232550DAE85D}
