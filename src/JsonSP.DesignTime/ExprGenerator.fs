@@ -1,4 +1,5 @@
 // Copyright (c) 2024 Florian Lorenzen
+
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
 // files (the “Software”), to deal in the Software without
@@ -93,8 +94,6 @@ module ExprGenerator =
                 <@@ fun (runtimeObj: int) -> JsonValue.Number(decimal runtimeObj) @@>
         | FSharpString -> <@@ fun (runtimeObj: string) -> JsonValue.String(runtimeObj) @@>
 
-    let rec private generateTypedObjectToJsonVal () : Expr = failwith "nyi"
-
     let generatePropertyGetter
         (classMap: Map<string, ProvidedTypeDefinition>)
         { Name = name
@@ -146,14 +145,14 @@ module ExprGenerator =
 
                 Expr.Application(convertToRuntimeType, propertySelect)
 
-    let generateIsNullCheck (fSharpType: FSharpType) (arg: Expr) : Expr =
+    let private generateIsNullCheck (fSharpType: FSharpType) (arg: Expr) : Expr =
         match fSharpType with
         | FSharpBool -> CommonExprs.callOpNot (CommonExprs.getNullableHasValue typeof<bool> arg)
         | FSharpInt -> CommonExprs.callOpNot (CommonExprs.getNullableHasValue typeof<int> arg)
         | FSharpDouble -> CommonExprs.callOpNot (CommonExprs.getNullableHasValue typeof<double> arg)
         | _ -> CommonExprs.callOpEquality arg (Expr.Value(null))
 
-    let generatePropertyCreation
+    let private generatePropertyCreation
         (classMap: Map<string, ProvidedTypeDefinition>)
         (name: string)
         (optional: bool)

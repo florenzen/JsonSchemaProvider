@@ -48,7 +48,6 @@ module TypeProvider =
                 FSharpType = fSharpType } as property in properties ->
 
               let plainPropertyCompileTimeType = fSharpTypeToCompileTimeType classMap fSharpType
-              let plainPropertyRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
 
               ProvidedProperty(
                   propertyName = name,
