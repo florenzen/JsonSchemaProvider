@@ -8,10 +8,10 @@ index: 1
 *)
 
 (*** condition: prepare ***)
-#r "../../src/JsonSchemaProvider.DesignTime/bin/Debug/netstandard2.1/JsonSchemaProvider.DesignTime.dll"
-#r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/JsonSchemaProvider.Runtime.dll"
-#r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/FSharp.Data.Json.Core.dll"
-#r "../../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/NJsonSchema.dll"
+#r "../src/JsonSchemaProvider.DesignTime/bin/Debug/netstandard2.1/JsonSchemaProvider.DesignTime.dll"
+#r "../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/JsonSchemaProvider.Runtime.dll"
+#r "../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/FSharp.Data.Json.Core.dll"
+#r "../src/JsonSchemaProvider.Runtime/bin/Debug/netstandard2.1/NJsonSchema.dll"
 
 (**
 # Scope
@@ -97,6 +97,16 @@ let schema =
     }"""
 
 type Xyz = JsonSchemaProvider<schema=schema>
+
+(*** hide ***)
+[<Literal>]
+let PathToSchemaFile = "docsSrc/schema.json"
+
+(**
+To read the JSON schema from a file, the static parameter `schemaFile` can be used:
+*)
+
+type FromFile = JsonSchemaProvider<schemaFile=PathToSchemaFile>
 
 (**
 ## Creating values of the provided type
@@ -362,7 +372,7 @@ let beginEndTable =
     Table.Parse(
         """
         {
-          "table": [
+          "cells": [
             [
               {"align": "right", "content": "Begin"},
               {"align": "left", "content": "10:13:00"}
@@ -376,7 +386,7 @@ let beginEndTable =
     )
 
 (**
-The nested arrays in `nestedArrayExample` can be flattened like this, e.g.:
+The  nested arrays in `nestedArrayExample` can be flattened like this, e.g.:
 *)
 
 beginEndTable.cells |> List.concat |> List.map (fun props -> props.ToString())
