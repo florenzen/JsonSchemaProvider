@@ -202,7 +202,8 @@ module DocsTool =
                       "fsdocs-package-version", quoted latestEntry.NuGetVersion
                       "fsdocs-readme-link", quoted (READMElink.ToString())
                       "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString())
-                      "fsdocs-license-link", quoted (LICENSElink.ToString()) ]
+                      "fsdocs-license-link", quoted (LICENSElink.ToString())
+                      "fsdocs-collection-name-link", quoted gitHubRepoUrl ]
             Strict = Some true }
 
 
