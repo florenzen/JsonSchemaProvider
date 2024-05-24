@@ -13,6 +13,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSchemaProvider.Tests", 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSchemaProvider.DesignTime", "src\JsonSchemaProvider.DesignTime\JsonSchemaProvider.DesignTime.fsproj", "{36A489D0-B65A-4CB7-B3E0-0790D304FDFE}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "build", "build\build.fsproj", "{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{36A489D0-B65A-4CB7-B3E0-0790D304FDFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36A489D0-B65A-4CB7-B3E0-0790D304FDFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36A489D0-B65A-4CB7-B3E0-0790D304FDFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B8200652-9891-4846-BDC7-579735475AED} = {3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}
