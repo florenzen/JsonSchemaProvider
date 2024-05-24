@@ -11,13 +11,13 @@ open JsonSchemaProvider
 let flatObject =
     """
     {
-        "type": "object",
-        "properties": {
-            "X": { "type": "string" },
-            "Y": { "type": "string" },
-            "Z": { "type": "integer" }
-        },
-        "required": ["Y"]
+      "type": "object",
+      "properties": {
+        "X": { "type": "string" },
+        "Y": { "type": "string" },
+        "Z": { "type": "integer" }
+      },
+      "required": ["Y"]
     }"""
 
 type FlatObject = JsonSchemaProvider<schema=flatObject>
@@ -36,37 +36,37 @@ printfn "%A %A %A" fo2.X fo2.Y fo2.Z
 let nestedObjects =
     """
     {
-        "type": "object",
-        "properties": {
-            "header": {
-                "type": "object",
-                "properties": {
-                    "id": {"type": "integer"},
-                    "sender": {"type": "string"},
-                    "resend": {"type": "boolean"},
-                    "time": {
-                        "type": "object",
-                        "properties": {
-                            "hour": {"type": "integer"},
-                            "minute": {"type": "integer"},
-                            "second": {"type": "integer"}
-                        },
-                        "required": ["hour", "minute", "second"]
-                    }
-                },
-                "required": ["id", "sender"]
-            },
-            "body": {
-                "type": "object",
-                "properties": {
-                    "length": {"type": "integer"},
-                    "payload": {"type": "string"}
-                },
-                "required": ["length", "payload"]
-            },
-            "addendum": {"type": "string"}
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "properties": {
+            "id": {"type": "integer"},
+            "sender": {"type": "string"},
+            "resend": {"type": "boolean"},
+            "time": {
+              "type": "object",
+              "properties": {
+                "hour": {"type": "integer"},
+                "minute": {"type": "integer"},
+                "second": {"type": "integer"}
+              },
+              "required": ["hour", "minute", "second"]
+            }
+          },
+          "required": ["id", "sender"]
         },
-        "required": ["body"]
+        "body": {
+          "type": "object",
+          "properties": {
+            "length": {"type": "integer"},
+            "payload": {"type": "string"}
+          },
+          "required": ["length", "payload"]
+        },
+        "addendum": {"type": "string"}
+      },
+      "required": ["body"]
     }"""
 
 type NestedObjects = JsonSchemaProvider<schema=nestedObjects>
@@ -75,11 +75,11 @@ let no1 =
     NestedObjects.Parse(
         """
         {
-            "header": {"id": 12, "sender": "remote"},
-            "body": {
-                "length": 1,
-                "payload": "U"
-            }
+          "header": {"id": 12, "sender": "remote"},
+          "body": {
+            "length": 1,
+            "payload": "U"
+          }
         }"""
     )
 
@@ -110,22 +110,22 @@ printfn
 let nestedArrayWithObjectItems =
     """
     {
-        "type": "object",
-        "properties": {
-            "values": {
-                "type": "array",
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "propA": {"type": "integer"},
-                            "propB": {"type": "string"}
-                        }
-                    }
-                }
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "propA": {"type": "integer"},
+                "propB": {"type": "string"}
+              }
             }
+          }
         }
+      }
     }"""
 
 type NestedArrayWithObjectItems = JsonSchemaProvider<schema=nestedArrayWithObjectItems>
@@ -137,16 +137,16 @@ let nawoi1 =
     NestedArrayWithObjectItems.Parse(
         """
         {
-            "values": [
-                [
-                    {"propA": 1, "propB": "x"},
-                    {"propA": 2, "propB": "y"}
-                ],
-                [
-                    {"propA": 10, "propB": "xx"},
-                    {"propA": 20}
-                ]
+          "values": [
+            [
+              {"propA": 1, "propB": "x"},
+              {"propA": 2, "propB": "y"}
+            ],
+            [
+              {"propA": 10, "propB": "xx"},
+              {"propA": 20}
             ]
+          ]
         }"""
     )
 
