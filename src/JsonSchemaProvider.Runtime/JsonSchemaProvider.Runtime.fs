@@ -23,7 +23,7 @@
 
 namespace JsonSchemaProvider
 
-open System.Collections.Generic
+open System.Collections.Concurrent
 open NJsonSchema
 open FSharp.Data
 
@@ -34,7 +34,7 @@ type NullableJsonValue(jsonVal: JsonValue) =
 
 
 module SchemaCache =
-    let private cache = Dictionary<int, JsonSchema>()
+    let private cache = ConcurrentDictionary<int, JsonSchema>()
 
     let parseSchema (schemaSource: string) =
         JsonSchema.FromJsonAsync(schemaSource)
@@ -47,14 +47,15 @@ module SchemaCache =
         cache[hashCode] = schema
 
     let retrieveSchema (hashCode: int) (schemaSource: string) =
-        let (available, schema) = cache.TryGetValue(hashCode)
+        cache.GetOrAdd(hashCode, fun _ -> parseSchema schemaSource)
+        // let (available, schema) = cache.TryGetValue(hashCode)
 
-        if available then
-            schema
-        else
-            let schema = parseSchema schemaSource
-            cache.Add(hashCode, schema)
-            schema
+        // if available then
+        //     schema
+        // else
+        //     let schema = parseSchema schemaSource
+        //     cache.Add(hashCode, schema)
+        //     schema
 
 #if !IS_DESIGNTIME
 [<assembly: FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
