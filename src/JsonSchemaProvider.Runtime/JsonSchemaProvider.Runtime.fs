@@ -47,15 +47,7 @@ module SchemaCache =
         cache[hashCode] = schema
 
     let retrieveSchema (hashCode: int) (schemaSource: string) =
-        cache.GetOrAdd(hashCode, fun _ -> parseSchema schemaSource)
-        // let (available, schema) = cache.TryGetValue(hashCode)
-
-        // if available then
-        //     schema
-        // else
-        //     let schema = parseSchema schemaSource
-        //     cache.Add(hashCode, schema)
-        //     schema
+        cache.GetOrAdd(hashCode, (fun _ -> parseSchema schemaSource))
 
 #if !IS_DESIGNTIME
 [<assembly: FSharp.Core.CompilerServices.TypeProviderAssembly("JsonSchemaProvider.DesignTime")>]
