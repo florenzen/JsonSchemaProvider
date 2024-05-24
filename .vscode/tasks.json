@@ -2,7 +2,8 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "msbuild",
+			"type": "shell",
+			"command": "./build.sh DotnetBuild",
 			"problemMatcher": [
 				"$msCompile"
 			],
@@ -11,7 +12,34 @@
 				"isDefault": true
 			},
 			"label": "build",
-			"detail": "Build the JsonSchemaProvider.sln solution using dotnet build",
+			"detail": "Build the JsonSchemaProvider.sln solution using FAKE",
+		},
+		{
+			"type": "shell",
+			"command": "./build.sh DotnetTest",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"label": "test",
+			"detail": "Run the tests using FAKE",
+		},
+		{
+			"type": "shell", 
+			"command": "./build.sh BuildDocs",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"label": "docs",
+			"detail": "Build the docs",
 		}
 	]
 }
