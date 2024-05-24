@@ -81,7 +81,7 @@ let LICENSElink = Uri(Uri(gitHubRepoUrl), $"blob/{releaseBranch}/{licenseFile}")
 
 let changelogPath = rootDirectory </> changelogFile
 
-let changelog = Fake.Core.Changelog.load changelogPath
+let changelog = Changelog.load changelogPath
 
 let mutable latestEntry =
     if Seq.isEmpty changelog.Entries then
@@ -539,7 +539,6 @@ let buildDocs ctx =
 let watchDocs ctx =
     let configuration = configuration (ctx.Context.AllExecutingTargets)
     DocsTool.watch (string configuration)
-
 
 let initTargets () =
     BuildServer.install [ GitHubActions.Installer ]
