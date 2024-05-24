@@ -28,4 +28,8 @@ module Main =
     open Expecto
 
     [<EntryPoint>]
-    let main args = runTestsWithCLIArgs [] args Tests.tests
+    let main args =
+        runTestsWithCLIArgs
+            []
+            args
+            (testList "JsonSchemaProvider.Tests" [ JsonSchemaProviderTests.tests; SchemaConversionTests.tests ])

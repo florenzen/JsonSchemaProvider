@@ -31,70 +31,70 @@ module SchemaConversionTests =
     let flatObject =
         """
         {
-            "type": "object",
-            "properties": {
-                "X": { "type": "string" },
-                "Y": { "type": "string" },
-                "Z": { "type": "integer" }
-            }
+          "type": "object",
+          "properties": {
+            "X": { "type": "string" },
+            "Y": { "type": "string" },
+              "Z": { "type": "integer" }
+          }
         }"""
 
     [<Literal>]
     let nestedArrayWithObjectItems =
         """
         {
-            "type": "object",
-            "properties": {
-                "values": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "propA": {"type": "integer"},
-                                "propB": {"type": "string"}
-                            }
-                        }
-                    }
+          "type": "object",
+          "properties": {
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "propA": {"type": "integer"},
+                    "propB": {"type": "string"}
+                  }
                 }
+              }
             }
+          }
         }"""
 
     [<Literal>]
     let nestedObjects =
         """
         {
-            "type": "object",
-            "properties": {
-                "header": {
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "integer"},
-                        "sender": {"type": "string"},
-                        "resend": {"type": "boolean"},
-                        "time": {
-                            "type": "object",
-                            "properties": {
-                                "hour": {"type": "integer"},
-                                "minute": {"type": "integer"},
-                                "second": {"type": "integer"}
-                            },
-                            "required": ["hour", "minute", "second"]
-                        }
-                    },
-                    "required": ["id", "sender"]
-                },
-                "body": {
-                    "type": "object",
-                    "properties": {
-                        "length": {"type": "integer"},
-                        "payload": {"type": "string"}
-                    },
-                    "required": ["length", "payload"]
+          "type": "object",
+          "properties": {
+            "header": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer"},
+                "sender": {"type": "string"},
+                "resend": {"type": "boolean"},
+                "time": {
+                  "type": "object",
+                  "properties": {
+                    "hour": {"type": "integer"},
+                    "minute": {"type": "integer"},
+                    "second": {"type": "integer"}
+                  },
+                  "required": ["hour", "minute", "second"]
                 }
+              },
+              "required": ["id", "sender"]
             },
-            "required": ["body"]
+            "body": {
+              "type": "object",
+              "properties": {
+                "length": {"type": "integer"},
+                "payload": {"type": "string"}
+              },
+              "required": ["length", "payload"]
+            }
+          },
+          "required": ["body"]
         }"""
 
     let nestedArrayWithObjectItemsShouldBeParsedCorrectly =
