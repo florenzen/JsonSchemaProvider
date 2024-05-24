@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cache to avoid repeatedly parsing the schema file or string.
 - A draft of the manual.
 
+### Fixed
+- Nested arrays are possible.
+
+### Changed
+- The type provider uses several internal abstract representations before
+  generating the code of the provided type.
+
 ## [0.1.0-pre.4] - 2023-10-18
 
 ### Added
