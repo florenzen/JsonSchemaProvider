@@ -59,10 +59,6 @@ most of its build targets. The list of available targets can be obtained by
 - `CONFIGURATION` will set the [configuration](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build?tabs=netcore2x#options) of the dotnet commands. 
   If not set, it will default to Release.
   - `CONFIGURATION=Debug ./build.sh` will result in `-c` additions to commands such as in `dotnet build -c Debug`
-- `ENABLE_COVERAGE` Will enable running code coverage metrics.  AltCover can have
-  [severe performance degradation](https://github.com/SteveGilham/altcover/issues/57) so code coverage
-  evaluation are disabled by default to speed up the feedback loop.
-  - `ENABLE_COVERAGE=1 ./build.sh` will enable code coverage evaluation
 
 ## Debugging
 
