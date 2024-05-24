@@ -64,6 +64,13 @@ most of its build targets. The list of available targets can be obtained by
   evaluation are disabled by default to speed up the feedback loop.
   - `ENABLE_COVERAGE=1 ./build.sh` will enable code coverage evaluation
 
+## Debugging
+
+Debugging type providers requires to run the FSharp compiler or interpreter on a source
+file using the type provider since the provider's code is executed in the compilation
+pipeline. See the comments in [debugUtils/debug.fsx](debugUtils/debug.fsx) how to launch the
+code in the Ionide debugger.
+
 ## License
 
 The JSON schema type provider is available under the MIT license. For more information see [license file](LICENSE).
