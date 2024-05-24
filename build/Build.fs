@@ -99,10 +99,10 @@ let githubToken = Environment.environVarOrNone "GITHUB_TOKEN"
 
 let nugetToken = Environment.environVarOrNone "NUGET_TOKEN"
 
+
 // ----------------------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------------------
-
 
 let isRelease (targets: Target list) =
     targets |> Seq.map (fun t -> t.Name) |> Seq.exists ((=) "PublishToNuGet")
@@ -122,7 +122,6 @@ let failOnBadExitAndPrint (p: ProcessResult) =
         p.Errors |> Seq.iter Trace.traceError
 
         failwithf "failed with exitcode %d" p.ExitCode
-
 
 let isCI = lazy environVarAsBoolOrDefault "CI" false
 
@@ -165,6 +164,7 @@ module dotnet =
 
     let fantomas args = DotNet.exec id "fantomas" args
 
+
 module FSharpAnalyzers =
     type Arguments =
         | Project of string
@@ -206,7 +206,6 @@ module DocsTool =
                       "fsdocs-collection-name-link", quoted gitHubRepoUrl ]
             Strict = Some true }
 
-
     let cleanDocsCache () = Fsdocs.cleanCache rootDirectory
 
     let build (configuration) =
@@ -226,6 +225,7 @@ module DocsTool =
             { p with
                 BuildCommandParams = Some(buildParams p.BuildCommandParams) })
 
+
 let allReleaseChecks () =
     failOnWrongBranch ()
     Changelog.failOnEmptyChangelog latestEntry
@@ -242,6 +242,7 @@ let allPublishChecks () =
     failOnLocalBuild ()
     Changelog.failOnEmptyChangelog latestEntry
 
+
 // ----------------------------------------------------------------------------
 // Target Implementations
 // ----------------------------------------------------------------------------
@@ -255,7 +256,6 @@ let clean _ =
     !!srcGlob ++ testsGlob
     |> Seq.collect (fun p -> [ "bin"; "obj" ] |> Seq.map (fun sp -> IO.Path.GetDirectoryName p </> sp))
     |> Shell.cleanDirs
-
 
 let dotnetRestore _ =
     [ sln ]
@@ -282,7 +282,6 @@ let deleteChangelogBackupFile _ =
     if String.isNotNullOrEmpty Changelog.changelogBackupFilename then
         Shell.rm Changelog.changelogBackupFilename
 
-
 let dotnetBuild ctx =
     let args =
         [ sprintf "/p:PackageVersion=%s" latestEntry.NuGetVersion; "--no-restore" ]
@@ -292,9 +291,7 @@ let dotnetBuild ctx =
             { c with
                 MSBuildParams = disableBinLog c.MSBuildParams
                 Configuration = configuration (ctx.Context.AllExecutingTargets)
-                Common = c.Common |> DotNet.Options.withAdditionalArgs args
-
-            })
+                Common = c.Common |> DotNet.Options.withAdditionalArgs args })
         sln
 
 let fsharpAnalyzers _ =
@@ -366,7 +363,6 @@ let showCoverageReport _ =
     |> CreateProcess.fromCommand
     |> Proc.start
     |> ignore
-
 
 let watchTests _ =
     !!testsGlob
@@ -530,7 +526,7 @@ let checkFormatCode ctx =
     else
         Trace.logf "Errors while formatting: %A" result.Errors
 
-let listTargets ctx = Target.listAvailable ()
+let listTargets _ = Target.listAvailable ()
 
 let cleanDocsCache _ = DocsTool.cleanDocsCache ()
 
@@ -557,10 +553,10 @@ let initTargets () =
     // ----------------------------------------------------------------------------
     Option.iter (TraceSecrets.register "<GITHUB_TOKEN>") githubToken
     Option.iter (TraceSecrets.register "<NUGET_TOKEN>") nugetToken
+
     // ----------------------------------------------------------------------------
     // Target Declaration
     // ----------------------------------------------------------------------------
-
     Target.create "Clean" clean
     Target.create "DotnetRestore" dotnetRestore
     Target.create "UpdateChangelog" updateChangelog
