@@ -2,7 +2,7 @@
 namespace System
 open System.Reflection
 
-[<assembly: AssemblyTitleAttribute("JsonSchemaProvider.Runtime")>]
+[<assembly: AssemblyTitleAttribute("JsonSchemaProvider.DesignTime")>]
 [<assembly: AssemblyProductAttribute("JsonSchemaProvider")>]
 [<assembly: AssemblyVersionAttribute("0.1.0")>]
 [<assembly: AssemblyMetadataAttribute("ReleaseDate","2024-05-25T00:00:00.0000000+00:00")>]
@@ -13,7 +13,7 @@ open System.Reflection
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] AssemblyTitle = "JsonSchemaProvider.Runtime"
+    let [<Literal>] AssemblyTitle = "JsonSchemaProvider.DesignTime"
     let [<Literal>] AssemblyProduct = "JsonSchemaProvider"
     let [<Literal>] AssemblyVersion = "0.1.0"
     let [<Literal>] AssemblyMetadata_ReleaseDate = "2024-05-25T00:00:00.0000000+00:00"
