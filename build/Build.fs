@@ -611,7 +611,6 @@ let initTargets () =
 
     "DotnetBuild" ==>! "BuildDocs"
 
-
     "DotnetBuild" ==>! "WatchDocs"
 
     "DotnetTest" ==> "GenerateCoverageReport" ==>! "ShowCoverageReport"
