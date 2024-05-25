@@ -108,7 +108,7 @@ let getVersionNumber envVarName ctx =
 
 let mutable changelogBackupFilename = ""
 
-let updateChangelog changelogPath (changelog: Fake.Core.Changelog.Changelog) gitHubRepoUrl ctx =
+let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl ctx =
 
     let verStr = ctx |> getVersionNumber "RELEASE_VERSION"
 
@@ -167,7 +167,7 @@ let updateChangelog changelogPath (changelog: Fake.Core.Changelog.Changelog) git
         Changelog.ChangelogEntry.New(
             assemblyVersion.Value,
             nugetVersion.Value,
-            Some System.DateTime.Today,
+            Some DateTime.Today,
             description,
             unreleasedChanges @ prereleaseChanges,
             false
@@ -177,7 +177,7 @@ let updateChangelog changelogPath (changelog: Fake.Core.Changelog.Changelog) git
         Changelog.Changelog.New(changelog.Header, changelog.Description, None, newEntry :: changelog.Entries)
 
     // Save changelog to temporary file before making any edits
-    changelogBackupFilename <- System.IO.Path.GetTempFileName()
+    changelogBackupFilename <- IO.Path.GetTempFileName()
 
     changelogPath |> Shell.copyFile changelogBackupFilename
 
@@ -194,7 +194,7 @@ let updateChangelog changelogPath (changelog: Fake.Core.Changelog.Changelog) git
     let tailLines = File.read changelogPath |> List.ofSeq |> List.rev
 
     let isRef (line: string) =
-        System.Text.RegularExpressions.Regex.IsMatch(line, @"^\[.+?\]:\s?[a-z]+://.*$")
+        Text.RegularExpressions.Regex.IsMatch(line, @"^\[.+?\]:\s?[a-z]+://.*$")
 
     let linkReferenceTargets =
         tailLines
