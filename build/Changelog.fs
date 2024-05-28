@@ -1,6 +1,7 @@
 module Changelog
 
 open System
+open System.Text.RegularExpressions
 open Fake.Core
 open Fake.IO
 
@@ -108,18 +109,59 @@ let getVersionNumber envVarName ctx =
 
 let mutable changelogBackupFilename = ""
 
-let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl ctx =
+let private splitRefsFooter
+    (changelog: Changelog.Changelog)
+    (gitHubRepoUrl: string)
+    : Changelog.Changelog * string list =
+    let getChangeText: Changelog.Change -> Changelog.ChangeText =
+        function
+        | Changelog.Added(text)
+        | Changelog.Changed(text)
+        | Changelog.Custom(_, text)
+        | Changelog.Deprecated(text)
+        | Changelog.Fixed(text)
+        | Changelog.Removed(text)
+        | Changelog.Security(text) -> text
 
+    let isRef (changeText: Changelog.ChangeText) : bool =
+        Regex.IsMatch(changeText.CleanedText, $"\[[a-zA-Z0-9.-]+\]: {gitHubRepoUrl}")
+
+    let removeRefsFromEntry (entry: Changelog.ChangelogEntry) =
+        let changes =
+            entry.Changes
+            |> List.filter (fun (change: Changelog.Change) -> getChangeText change |> isRef |> not)
+
+        { entry with Changes = changes }
+
+    if changelog.Entries.Length > 0 then
+        let lastEntry = List.last changelog.Entries
+        let oldestEntry = lastEntry |> removeRefsFromEntry
+
+        let links =
+            lastEntry.Changes
+            |> List.filter (fun (change: Changelog.Change) -> getChangeText change |> isRef)
+            |> List.map (getChangeText >> fun ct -> ct.CleanedText)
+
+        let cleanedChangelog =
+            { changelog with
+                Entries = List.take (changelog.Entries.Length - 1) changelog.Entries @ [ oldestEntry ] }
+
+        (cleanedChangelog, links)
+    else
+        (changelog, [])
+
+let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl ctx =
+    let (cleanedChangelog, refs) = splitRefsFooter changelog gitHubRepoUrl
     let verStr = ctx |> getVersionNumber "RELEASE_VERSION"
 
     let description, unreleasedChanges =
-        match changelog.Unreleased with
+        match cleanedChangelog.Unreleased with
         | None -> None, []
         | Some u -> u.Description, u.Changes
 
     let newVersion = SemVer.parse verStr
 
-    changelog.Entries
+    cleanedChangelog.Entries
     |> List.tryFind (fun entry -> entry.SemVer = newVersion)
     |> Option.iter (fun entry ->
         Trace.traceErrorfn
@@ -133,7 +175,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
 
         failwith "Can't release with a duplicate version number")
 
-    changelog.Entries
+    cleanedChangelog.Entries
     |> List.tryFind (fun entry -> entry.SemVer > newVersion)
     |> Option.iter (fun entry ->
         Trace.traceErrorfn
@@ -151,7 +193,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         (version.Major, version.Minor, version.Patch)
 
     let prereleaseEntries =
-        changelog.Entries
+        cleanedChangelog.Entries
         |> List.filter (fun entry ->
             entry.SemVer.PreRelease.IsSome
             && versionTuple entry.SemVer = versionTuple newVersion)
@@ -174,7 +216,12 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         )
 
     let newChangelog =
-        Changelog.Changelog.New(changelog.Header, changelog.Description, None, newEntry :: changelog.Entries)
+        Changelog.Changelog.New(
+            cleanedChangelog.Header,
+            cleanedChangelog.Description,
+            None,
+            newEntry :: cleanedChangelog.Entries
+        )
 
     // Save changelog to temporary file before making any edits
     changelogBackupFilename <- IO.Path.GetTempFileName()
@@ -186,7 +233,8 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
     newChangelog |> Changelog.save changelogPath
 
     // Now update the link references at the end of the file
-    let linkReferenceForLatestEntry = mkLinkReference newVersion changelog gitHubRepoUrl
+    let linkReferenceForLatestEntry =
+        mkLinkReference newVersion cleanedChangelog gitHubRepoUrl
 
     let linkReferenceForUnreleased =
         sprintf "[Unreleased]: %s/compare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
@@ -197,10 +245,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         Text.RegularExpressions.Regex.IsMatch(line, @"^\[.+?\]:\s?[a-z]+://.*$")
 
     let linkReferenceTargets =
-        tailLines
-        |> List.skipWhile String.isNullOrWhiteSpace
-        |> List.takeWhile isRef
-        |> List.rev // Now most recent entry is at the head of the list
+        refs |> List.skipWhile String.isNullOrWhiteSpace |> List.takeWhile isRef
 
     let newLinkReferenceTargets =
         match linkReferenceTargets with
@@ -217,7 +262,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
     let skipCount = blankLineCount + linkRefCount
 
     let updatedLines =
-        List.rev (tailLines |> List.skip skipCount) @ newLinkReferenceTargets
+        List.rev (tailLines |> List.skip skipCount) @ [ "" ] @ newLinkReferenceTargets
 
     File.write false changelogPath updatedLines
 
