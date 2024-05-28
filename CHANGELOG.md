@@ -64,9 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-[Unreleased]: https://github.com/florenzen/JsonSchemaProvider//compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/florenzen/JsonSchemaProvider//releases/tag/v0.1.0
-[0.1.0-pre.5]: https://github.com/florenzen/JsonSchemaProvider//releases/tag/v0.1.0-pre.5
+[Unreleased]: https://github.com/florenzen/JsonSchemaProvider/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0
+[0.1.0-pre.5]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.5
 [0.1.0-pre.4]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.4
 [0.1.0-pre.3]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.3
 [0.1.0-pre.2]: https://github.com/florenzen/JsonSchemaProvider/releases/tag/v0.1.0-pre.2
