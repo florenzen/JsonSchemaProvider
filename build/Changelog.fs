@@ -43,13 +43,14 @@ let mkLinkReference (newVersion: SemVerInfo) (changelog: Changelog.Changelog) gi
 
         let linkTarget =
             match prevEntry with
-            | Some entry ->
+            | Some entry when newVersion <> entry.SemVer ->
                 sprintf
-                    "%s/compare/%s...%s"
+                    "%scompare/%s...%s"
                     gitHubRepoUrl
                     (tagFromVersionNumber entry.SemVer.AsString)
                     (tagFromVersionNumber newVersion.AsString)
-            | None -> sprintf "%s/releases/tag/%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString)
+            | None
+            | Some(_) -> sprintf "%sreleases/tag/%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString)
 
         sprintf "[%s]: %s" newVersion.AsString linkTarget
 
@@ -237,7 +238,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         mkLinkReference newVersion cleanedChangelog gitHubRepoUrl
 
     let linkReferenceForUnreleased =
-        sprintf "[Unreleased]: %s/compare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
+        sprintf "[Unreleased]: %scompare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
 
     let tailLines = File.read changelogPath |> List.ofSeq |> List.rev
 
