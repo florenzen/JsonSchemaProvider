@@ -12,7 +12,7 @@
 				"isDefault": true
 			},
 			"label": "build",
-			"detail": "Build the JsonSchemaProvider.sln solution using FAKE",
+			"detail": "Build the JsonSchemaProvider.sln solution using FAKE"
 		},
 		{
 			"type": "shell",
@@ -25,10 +25,10 @@
 				"isDefault": true
 			},
 			"label": "test",
-			"detail": "Run the tests using FAKE",
+			"detail": "Run the tests using FAKE"
 		},
 		{
-			"type": "shell", 
+			"type": "shell",
 			"command": "./build.sh BuildDocs",
 			"isBackground": true,
 			"problemMatcher": [
@@ -39,7 +39,17 @@
 				"isDefault": false
 			},
 			"label": "docs",
-			"detail": "Build the docs",
+			"detail": "Build the docs"
+		},
+		{
+			"type": "shell",
+			"command": "dotnet build build/build.fsproj",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build",
+			"label": "Build: build.fsproj",
+			"detail": "Build the build.fsproj project using dotnet build"
 		}
 	]
 }

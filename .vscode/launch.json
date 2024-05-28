@@ -17,6 +17,22 @@
             "stopAtEntry": false,
             "console": "internalConsole",
             "justMyCode": false
+        },
+        {
+            "name": "build UpdateChangelog 0.1.0",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build: build.fsproj",
+            "program": "${workspaceFolder}/build/bin/Debug/net8.0/build.dll",
+            "args": [
+                "-t",
+                "UpdateChangelog",
+                "0.1.0"
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "justMyCode": true
         }
     ]
 }
