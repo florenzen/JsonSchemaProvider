@@ -20,7 +20,7 @@ examples how to use the type provider.
 
 ## Building
 
-The type provider requires the .NET SDK 7 or higher.
+The type provider requires the .NET SDK 8 or higher.
 
 The code comes with a [Dev Container specification](.devcontainer/devcontainer.json) that sets up the necessary
 tools and the .NET SDK.
