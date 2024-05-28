@@ -5,7 +5,7 @@
 
 The JsonSchemaProvider provides F# types from [JSON schemas](https://json-schema.org). It can be used to build
 JSON values in a strongly typed way that conform to the schema or to parse JSON values into an F# value that
-can be queried in a stringly types way. Specifications like numeric ranges or string patterns that cannot be
+can be queried in a strongly typed way. Specifications like numeric ranges or string patterns that cannot be
 validated at compile time are checked at runtime.
 
 The JSON schema can either be given as an inline string literal or by a local file.
