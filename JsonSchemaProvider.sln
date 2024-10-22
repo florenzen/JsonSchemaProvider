@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSchemaProvider.Runtime", "src\JsonSchemaProvider.Runtime\JsonSchemaProvider.Runtime.fsproj", "{B8200652-9891-4846-BDC7-579735475AED}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JsonSchemaProvider", "src\JsonSchemaProvider.Runtime\JsonSchemaProvider.fsproj", "{B8200652-9891-4846-BDC7-579735475AED}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{354C1F78-6C4E-46CA-92FA-232550DAE85D}"
 EndProject
@@ -19,9 +19,6 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B8200652-9891-4846-BDC7-579735475AED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -40,6 +37,9 @@ Global
 		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B10F1C4B-8EAD-4B45-9A66-DDA376393DA5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B8200652-9891-4846-BDC7-579735475AED} = {3074F79D-3FEE-4DEB-A2CA-213CFA5D22E6}

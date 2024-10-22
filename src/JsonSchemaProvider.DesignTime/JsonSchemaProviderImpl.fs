@@ -34,7 +34,7 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     inherit
         TypeProviderForNamespaces(
             config,
-            assemblyReplacementMap = [ ("JsonSchemaProvider.DesignTime", "JsonSchemaProvider.Runtime") ],
+            assemblyReplacementMap = [ ("JsonSchemaProvider.DesignTime", "JsonSchemaProvider") ],
             addDefaultProbingLocation = true
         )
 
