@@ -48,7 +48,7 @@ and uses the JsonValue data type from FSharp.Data.</Description>
       <IsFSharpDesignTimeProvider>true</IsFSharpDesignTimeProvider>
       <PrivateAssets>all</PrivateAssets>
     </ProjectReference>
-    <PackageReference Include="FSharp.Data" Version="6.4.0" />
+    <PackageReference Include="FSharp.Data.Json.Core" Version="6.4.0" />
     <PackageReference Include="NJsonSchema" Version="11.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
