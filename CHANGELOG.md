@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Narrow dependency on `FSharp.Data` to `FSharp.Data.Json.Core`
-  [#4](https://github.com/florenzen/JsonSchemaProvider/pull/4).
+  [#4](https://github.com/florenzen/JsonSchemaProvider/pull/4) by @xperiandri.
 
 ## [0.1.0] - 2024-05-28
 
