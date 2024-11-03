@@ -1,17 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <DefineConstants>IS_DESIGNTIME</DefineConstants>
+    <DefineConstants>IS_DESIGNTIME;$(DefineConstants)</DefineConstants>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <BaseOutputPath Condition="$(IsNuGet) == ''">..\JsonSchemaProvider.Runtime\bin</BaseOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Data.Json.Core" Version="6.4.0" />
     <PackageReference Include="FSharp.TypeProviders.SDK" Version="8.0.2">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="NJsonSchema" Version="11.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NJsonSchema" Version="11.0.2" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="6.0.0" />
     <PackageReference Update="FSharp.Core" Version="8.*">
       <!-- This excludes FSharp.Core.xml and FSharp.Core.resources.dll while referencing the right FSharp.Core.dll version -->
       <ExcludeAssets>runtime;contentFiles</ExcludeAssets>
