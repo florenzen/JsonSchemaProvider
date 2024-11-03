@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Narrow dependency on `FSharp.Data` to `FSharp.Data.Json.Core`
   [#4](https://github.com/florenzen/JsonSchemaProvider/pull/4) by @xperiandri.
+- Fix type provider to work in Vsual Studio
+  [#5](https://github.com/florenzen/JsonSchemaProvider/pull/5) by @xperiandri.
+- Update dependencies
+  [#5](https://github.com/florenzen/JsonSchemaProvider/pull/5) by @xperiandri.
+
+### Changed
+- Lowered target framework to .NET Standard 2.0
+  [#5](https://github.com/florenzen/JsonSchemaProvider/pull/5) by @xperiandri.
+
+### Security
+- Add reference to `System.Text.Encoding.Web` to fix vulnerability in that library
+  [#5](https://github.com/florenzen/JsonSchemaProvider/pull/5) by @xperiandri.
 
 ## [0.1.0] - 2024-05-28
 
