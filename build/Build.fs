@@ -432,7 +432,9 @@ let dotnetPack ctx =
     DotNet.pack
         (fun c ->
             { c with
-                MSBuildParams = { (disableBinLog c.MSBuildParams) with Properties = [ ("IsNuGet", "true") ]}
+                MSBuildParams =
+                    { (disableBinLog c.MSBuildParams) with
+                        Properties = [ ("IsNuGet", "true") ] }
                 Configuration = configuration (ctx.Context.AllExecutingTargets)
                 OutputPath = Some distDir
                 Common = c.Common |> DotNet.Options.withAdditionalArgs args })
