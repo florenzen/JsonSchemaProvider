@@ -22,6 +22,14 @@
     <PackageReference Include="NJsonSchema" Version="11.0.2" />
   </ItemGroup>
   <ItemGroup>
+    <!-- <Reference Include="JsonSchemaProvider">
+      <HintPath Condition="Exists('..\..\src\JsonSchemaProvider.Runtime\bin\Debug\netstandard2.0\JsonSchemaProvider.dll')">..\..\src\JsonSchemaProvider.Runtime\bin\Debug\netstandard2.0\JsonSchemaProvider.dll</HintPath>
+      <HintPath Condition="Exists('..\..\src\JsonSchemaProvider.Runtime\bin\Release\netstandard2.0\JsonSchemaProvider.dll')">..\..\src\JsonSchemaProvider.Runtime\bin\Release\netstandard2.0\JsonSchemaProvider.dll</HintPath>
+    </Reference>
+    <Reference Include="JsonSchemaProvider.DesignTime">
+      <HintPath Condition="Exists('..\..\src\JsonSchemaProvider.Runtime\bin\Debug\netstandard2.0\JsonSchemaProvider.DesignTime.dll')">..\..\src\JsonSchemaProvider.Runtime\bin\Debug\netstandard2.0\JsonSchemaProvider.DesignTime.dll</HintPath>
+      <HintPath Condition="Exists('..\..\src\JsonSchemaProvider.Runtime\bin\Release\netstandard2.0\JsonSchemaProvider.DesignTime.dll')">..\..\src\JsonSchemaProvider.Runtime\bin\Release\netstandard2.0\JsonSchemaProvider.DesignTime.dll</HintPath>
+    </Reference> -->
     <ProjectReference Include="..\..\src\JsonSchemaProvider.Runtime\JsonSchemaProvider.fsproj" />
     <ProjectReference Include="..\..\src\JsonSchemaProvider.DesignTime\JsonSchemaProvider.DesignTime.fsproj" />
   </ItemGroup>
