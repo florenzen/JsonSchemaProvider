@@ -16,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="altcover" Version="9.0.102" />
     <PackageReference Include="Expecto" Version="10.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="1.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="FSharp.Data.Json.Core" Version="6.6.0" />
     <PackageReference Include="NJsonSchema" Version="11.5.2" />
