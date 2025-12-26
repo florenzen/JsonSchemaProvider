@@ -110,59 +110,18 @@ let getVersionNumber envVarName ctx =
 
 let mutable changelogBackupFilename = ""
 
-let private splitRefsFooter
-    (changelog: Changelog.Changelog)
-    (gitHubRepoUrl: string)
-    : Changelog.Changelog * string list =
-    let getChangeText: Changelog.Change -> Changelog.ChangeText =
-        function
-        | Changelog.Added(text)
-        | Changelog.Changed(text)
-        | Changelog.Custom(_, text)
-        | Changelog.Deprecated(text)
-        | Changelog.Fixed(text)
-        | Changelog.Removed(text)
-        | Changelog.Security(text) -> text
-
-    let isRef (changeText: Changelog.ChangeText) : bool =
-        Regex.IsMatch(changeText.CleanedText, $"\[[a-zA-Z0-9.-]+\]: {gitHubRepoUrl}")
-
-    let removeRefsFromEntry (entry: Changelog.ChangelogEntry) =
-        let changes =
-            entry.Changes
-            |> List.filter (fun (change: Changelog.Change) -> getChangeText change |> isRef |> not)
-
-        { entry with Changes = changes }
-
-    if changelog.Entries.Length > 0 then
-        let lastEntry = List.last changelog.Entries
-        let oldestEntry = lastEntry |> removeRefsFromEntry
-
-        let links =
-            lastEntry.Changes
-            |> List.filter (fun (change: Changelog.Change) -> getChangeText change |> isRef)
-            |> List.map (getChangeText >> fun ct -> ct.CleanedText)
-
-        let cleanedChangelog =
-            { changelog with
-                Entries = List.take (changelog.Entries.Length - 1) changelog.Entries @ [ oldestEntry ] }
-
-        (cleanedChangelog, links)
-    else
-        (changelog, [])
-
 let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl ctx =
-    let (cleanedChangelog, refs) = splitRefsFooter changelog gitHubRepoUrl
+    // let (cleanedChangelog, refs) = splitRefsFooter changelog gitHubRepoUrl
     let verStr = ctx |> getVersionNumber "RELEASE_VERSION"
 
     let description, unreleasedChanges =
-        match cleanedChangelog.Unreleased with
+        match changelog.Unreleased with
         | None -> None, []
         | Some u -> u.Description, u.Changes
 
     let newVersion = SemVer.parse verStr
 
-    cleanedChangelog.Entries
+    changelog.Entries
     |> List.tryFind (fun entry -> entry.SemVer = newVersion)
     |> Option.iter (fun entry ->
         Trace.traceErrorfn
@@ -176,7 +135,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
 
         failwith "Can't release with a duplicate version number")
 
-    cleanedChangelog.Entries
+    changelog.Entries
     |> List.tryFind (fun entry -> entry.SemVer > newVersion)
     |> Option.iter (fun entry ->
         Trace.traceErrorfn
@@ -194,7 +153,7 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         (version.Major, version.Minor, version.Patch)
 
     let prereleaseEntries =
-        cleanedChangelog.Entries
+        changelog.Entries
         |> List.filter (fun entry ->
             entry.SemVer.PreRelease.IsSome
             && versionTuple entry.SemVer = versionTuple newVersion)
@@ -216,12 +175,31 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
             false
         )
 
+    let referencesWithoutUnreleased =
+        changelog.References
+        |> List.filter (fun ref ->
+            match ref with
+            | { SemVer = Changelog.ReferenceVersion.UnreleasedRef } -> true
+            | _ -> false)
+
+    let linkReferenceForUnreleased =
+        sprintf "%scompare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
+
+    let newUnreleased =
+        { Changelog.Reference.SemVer = Changelog.ReferenceVersion.UnreleasedRef
+          Changelog.Reference.RepoUrl = Uri linkReferenceForUnreleased }
+
+    let newVersionReference =
+        { Changelog.Reference.SemVer = Changelog.ReferenceVersion.SemVerRef newVersion
+          Changelog.Reference.RepoUrl = Uri linkReferenceForUnreleased }
+
     let newChangelog =
         Changelog.Changelog.New(
-            cleanedChangelog.Header,
-            cleanedChangelog.Description,
+            changelog.Header,
+            changelog.Description,
             None,
-            newEntry :: cleanedChangelog.Entries
+            newEntry :: changelog.Entries,
+            newUnreleased :: newVersionReference :: referencesWithoutUnreleased
         )
 
     // Save changelog to temporary file before making any edits
@@ -232,40 +210,6 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
     Target.activateFinal "DeleteChangelogBackupFile"
 
     newChangelog |> Changelog.save changelogPath
-
-    // Now update the link references at the end of the file
-    let linkReferenceForLatestEntry =
-        mkLinkReference newVersion cleanedChangelog gitHubRepoUrl
-
-    let linkReferenceForUnreleased =
-        sprintf "[Unreleased]: %scompare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
-
-    let tailLines = File.read changelogPath |> List.ofSeq |> List.rev
-
-    let isRef (line: string) =
-        Text.RegularExpressions.Regex.IsMatch(line, @"^\[.+?\]:\s?[a-z]+://.*$")
-
-    let linkReferenceTargets =
-        refs |> List.skipWhile String.isNullOrWhiteSpace |> List.takeWhile isRef
-
-    let newLinkReferenceTargets =
-        match linkReferenceTargets with
-        | [] -> [ linkReferenceForUnreleased; linkReferenceForLatestEntry ]
-        | first :: rest when first |> String.startsWith "[Unreleased]:" ->
-            linkReferenceForUnreleased :: linkReferenceForLatestEntry :: rest
-        | first :: rest -> linkReferenceForUnreleased :: linkReferenceForLatestEntry :: first :: rest
-
-    let blankLineCount =
-        tailLines |> Seq.takeWhile String.isNullOrWhiteSpace |> Seq.length
-
-    let linkRefCount = linkReferenceTargets |> List.length
-
-    let skipCount = blankLineCount + linkRefCount
-
-    let updatedLines =
-        List.rev (tailLines |> List.skip skipCount) @ [ "" ] @ newLinkReferenceTargets
-
-    File.write false changelogPath updatedLines
 
     // If build fails after this point but before we commit changes, undo our modifications
     Target.activateBuildFailure "RevertChangelog"
