@@ -3,31 +3,31 @@
   "isRoot": true,
   "tools": {
     "fantomas": {
-      "version": "6.3.4",
+      "version": "7.0.5",
       "commands": [
         "fantomas"
       ]
     },
     "dotnet-reportgenerator-globaltool": {
-      "version": "5.2.5",
+      "version": "5.5.1",
       "commands": [
         "reportgenerator"
       ]
     },
     "fsdocs-tool": {
-      "version": "20.0.0",
+      "version": "21.0.0",
       "commands": [
         "fsdocs"
       ]
     },
     "fsharp-analyzers": {
-      "version": "0.25.0",
+      "version": "0.34.1",
       "commands": [
         "fsharp-analyzers"
       ]
     },
     "dotnet-outdated-tool": {
-      "version": "4.6.4",
+      "version": "4.6.9",
       "commands": [
         "dotnet-outdated"
       ]
