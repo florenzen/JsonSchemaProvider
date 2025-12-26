@@ -111,7 +111,6 @@ let getVersionNumber envVarName ctx =
 let mutable changelogBackupFilename = ""
 
 let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl ctx =
-    // let (cleanedChangelog, refs) = splitRefsFooter changelog gitHubRepoUrl
     let verStr = ctx |> getVersionNumber "RELEASE_VERSION"
 
     let description, unreleasedChanges =
@@ -179,19 +178,22 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         changelog.References
         |> List.filter (fun ref ->
             match ref with
-            | { SemVer = Changelog.ReferenceVersion.UnreleasedRef } -> true
-            | _ -> false)
+            | { SemVer = Changelog.ReferenceVersion.UnreleasedRef } -> false
+            | _ -> true)
 
     let linkReferenceForUnreleased =
         sprintf "%scompare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
 
     let newUnreleased =
         { Changelog.Reference.SemVer = Changelog.ReferenceVersion.UnreleasedRef
-          Changelog.Reference.RepoUrl = Uri linkReferenceForUnreleased }
+          Changelog.Reference.RepoUrl = Uri(linkReferenceForUnreleased) }
+
+    let linkReferenceForNewVersion =
+        sprintf "%s/releases/tag/%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString)
 
     let newVersionReference =
         { Changelog.Reference.SemVer = Changelog.ReferenceVersion.SemVerRef newVersion
-          Changelog.Reference.RepoUrl = Uri linkReferenceForUnreleased }
+          Changelog.Reference.RepoUrl = Uri(linkReferenceForNewVersion) }
 
     let newChangelog =
         Changelog.Changelog.New(
