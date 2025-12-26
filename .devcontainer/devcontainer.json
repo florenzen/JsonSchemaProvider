@@ -1,7 +1,7 @@
 {
     "name": "dotnet10.0",
     "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
-    "postAttachCommand": "dotnet tool restore && dotnet restore",
+    "postAttachCommand": "git config --global --add safe.directory /workspaces/JsonSchemaProvider && dotnet tool restore && dotnet restore",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -9,7 +9,8 @@
                 "tintoy.msbuild-project-tools",
                 "ms-dotnettools.csharp",
                 "github.vscode-github-actions",
-                "eamodio.gitlens"
+                "eamodio.gitlens",
+                "patcx.vscode-nuget-gallery"
             ]
         }
     },
