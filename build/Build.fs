@@ -340,7 +340,7 @@ let dotnetTest ctx =
         sln
 
 let generateCoverageReport _ =
-    let coverageReports = !! "tests/**/coverage*.xml" |> String.concat ";"
+    let coverageReports = !!"tests/**/coverage*.xml" |> String.concat ";"
 
     let sourceDirs = !!srcGlob |> Seq.map Path.getDirectory |> String.concat ";"
 
