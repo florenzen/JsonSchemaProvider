@@ -18,10 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.5
 
-      - name: Setup .NET 8
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4.0.0
         with:
-          dotnet-version: 8.x
+          dotnet-version: 10.x
 
       - name: Publish
         env:
