@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Lowered target framework to .NET Standard 2.0
   [#5](https://github.com/florenzen/JsonSchemaProvider/pull/5) by @xperiandri.
+- Update NJsonSchema to 11.5.2, Newtonsoft.Json to 13.0.4, and FSharp.Data.Json.Core to 6.6.0
+  [#6](https://github.com/florenzen/JsonSchemaProvider/pull/6).
 
 ### Security
 - Add reference to `System.Text.Encoding.Web` to fix vulnerability in that library
