@@ -35,25 +35,31 @@ module TypeProvider =
     open FSharp.Data
 
     type private ProvidedTypeData =
-        { Assembly: Assembly
-          NamespaceName: string
-          RuntimeType: Type }
+        {
+            Assembly: Assembly
+            NamespaceName: string
+            RuntimeType: Type
+        }
 
     let private createProvidedProperties
         (classMap: Map<string, ProvidedTypeDefinition>)
         (properties: FSharpProperty list)
         : ProvidedProperty list =
-        [ for { Name = name
-                Optional = optional
-                FSharpType = fSharpType } as property in properties ->
+        [
+            for {
+                    Name = name
+                    Optional = optional
+                    FSharpType = fSharpType
+                } as property in properties ->
 
-              let plainPropertyCompileTimeType = fSharpTypeToCompileTimeType classMap fSharpType
+                let plainPropertyCompileTimeType = fSharpTypeToCompileTimeType classMap fSharpType
 
-              ProvidedProperty(
-                  propertyName = name,
-                  propertyType = optionalOrPlainType optional plainPropertyCompileTimeType,
-                  getterCode = generatePropertyGetter classMap property
-              ) ]
+                ProvidedProperty(
+                    propertyName = name,
+                    propertyType = optionalOrPlainType optional plainPropertyCompileTimeType,
+                    getterCode = generatePropertyGetter classMap property
+                )
+        ]
 
     let private createProvidedCreateMethod
         (nestedClass: bool)
@@ -64,14 +70,21 @@ module TypeProvider =
         (providedTypeDefinition: ProvidedTypeDefinition)
         : ProvidedMethod =
         let parameters =
-            [ for property in properties ->
-                  let parameterType =
-                      fSharpTypeToMethodParameterType classMap property.Optional property.FSharpType
+            [
+                for property in properties ->
+                    let parameterType =
+                        fSharpTypeToMethodParameterType classMap property.Optional property.FSharpType
 
-                  if property.Optional then
-                      ProvidedParameter(property.Name, parameterType, false, defaultValueForNullableType parameterType)
-                  else
-                      ProvidedParameter(property.Name, parameterType) ]
+                    if property.Optional then
+                        ProvidedParameter(
+                            property.Name,
+                            parameterType,
+                            false,
+                            defaultValueForNullableType parameterType
+                        )
+                    else
+                        ProvidedParameter(property.Name, parameterType)
+            ]
 
         ProvidedMethod(
             methodName = "Create",
@@ -127,9 +140,11 @@ module TypeProvider =
         (schemaHashCode: int32)
         (schemaString: string)
         (providedTypeData: ProvidedTypeData)
-        { Name = className
-          Properties = properties
-          NestedClasses = nestedClasses }
+        {
+            Name = className
+            Properties = properties
+            NestedClasses = nestedClasses
+        }
         (nestedClass: bool)
         : ProvidedTypeDefinition =
         let providedTypeDefinition =
@@ -181,9 +196,11 @@ module TypeProvider =
         (runtimeType: Type)
         : ProvidedTypeDefinition =
         let providedTypeData =
-            { Assembly = assembly
-              NamespaceName = namespaceName
-              RuntimeType = runtimeType }
+            {
+                Assembly = assembly
+                NamespaceName = namespaceName
+                RuntimeType = runtimeType
+            }
 
         let fSharpClassTree =
             parseJsonSchemaStructured schema |> jsonObjectToFSharpClassTree typeName

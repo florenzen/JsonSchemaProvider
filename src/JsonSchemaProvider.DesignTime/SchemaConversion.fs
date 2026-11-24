@@ -28,9 +28,11 @@ module SchemaConversion =
     open JsonSchemaProvider
 
     type JsonProperty =
-        { Name: string
-          Optional: bool
-          PropertyType: JsonSchemaType }
+        {
+            Name: string
+            Optional: bool
+            PropertyType: JsonSchemaType
+        }
 
     and JsonSchemaType =
         | JsonObject of JsonProperty list
@@ -46,9 +48,11 @@ module SchemaConversion =
 
         schema.Properties
         |> Seq.map (fun pair ->
-            { Name = pair.Key
-              Optional = isOptional (pair.Key)
-              PropertyType = parseType pair.Value })
+            {
+                Name = pair.Key
+                Optional = isOptional (pair.Key)
+                PropertyType = parseType pair.Value
+            })
         |> Seq.toList
         |> JsonObject
 
@@ -83,26 +87,34 @@ module SchemaConversion =
         | FSharpBool
 
     type FSharpProperty =
-        { Name: string
-          Optional: bool
-          FSharpType: FSharpType }
+        {
+            Name: string
+            Optional: bool
+            FSharpType: FSharpType
+        }
 
     type FSharpClassTree =
-        { Name: string
-          Properties: FSharpProperty list
-          NestedClasses: FSharpClassTree list }
+        {
+            Name: string
+            Properties: FSharpProperty list
+            NestedClasses: FSharpClassTree list
+        }
 
     let rec private jsonPropertyToFSharpPropertyAndNestedClass
-        ({ Name = propertyName
-           Optional = optional
-           PropertyType = propertyType }: JsonProperty)
+        ({
+             Name = propertyName
+             Optional = optional
+             PropertyType = propertyType
+         }: JsonProperty)
         : FSharpProperty * FSharpClassTree option =
         let (fSharpType, maybeClass) =
             jsonSchemaTypeToFSharpTypeAndNestedClass propertyName propertyType
 
-        ({ Name = propertyName
-           Optional = optional
-           FSharpType = fSharpType },
+        ({
+            Name = propertyName
+            Optional = optional
+            FSharpType = fSharpType
+         },
          maybeClass)
 
     and private jsonSchemaTypeToFSharpTypeAndNestedClass
@@ -132,9 +144,11 @@ module SchemaConversion =
 
         let nestedClasses = maybeNestedClasses |> List.map Option.toList |> List.concat
 
-        { Name = lhsName
-          Properties = fSharpProperties
-          NestedClasses = nestedClasses }
+        {
+            Name = lhsName
+            Properties = fSharpProperties
+            NestedClasses = nestedClasses
+        }
 
     let jsonObjectToFSharpClassTree (lhsName: string) (jsonSchemaType: JsonSchemaType) : FSharpClassTree =
         match jsonSchemaType with

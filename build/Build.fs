@@ -184,7 +184,8 @@ module DocsTool =
 
     let fsDocsDotnetOptions (o: DotNet.Options) =
         { o with
-            WorkingDirectory = rootDirectory }
+            WorkingDirectory = rootDirectory
+        }
 
     let fsDocsBuildParams configuration (p: Fsdocs.BuildCommandParams) =
         { p with
@@ -197,16 +198,18 @@ module DocsTool =
             Parameters =
                 Some
                     [
-                      // https://fsprojects.github.io/FSharp.Formatting/content.html#Templates-and-Substitutions
-                      "root", quoted documentationRootUrl
-                      "fsdocs-collection-name", quoted productName
-                      "fsdocs-repository-branch", quoted releaseBranch
-                      "fsdocs-package-version", quoted latestEntry.NuGetVersion
-                      "fsdocs-readme-link", quoted (READMElink.ToString())
-                      "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString())
-                      "fsdocs-license-link", quoted (LICENSElink.ToString())
-                      "fsdocs-collection-name-link", quoted gitHubRepoUrl ]
-            Strict = Some true }
+                        // https://fsprojects.github.io/FSharp.Formatting/content.html#Templates-and-Substitutions
+                        "root", quoted documentationRootUrl
+                        "fsdocs-collection-name", quoted productName
+                        "fsdocs-repository-branch", quoted releaseBranch
+                        "fsdocs-package-version", quoted latestEntry.NuGetVersion
+                        "fsdocs-readme-link", quoted (READMElink.ToString())
+                        "fsdocs-release-notes-link", quoted (CHANGELOGlink.ToString())
+                        "fsdocs-license-link", quoted (LICENSElink.ToString())
+                        "fsdocs-collection-name-link", quoted gitHubRepoUrl
+                    ]
+            Strict = Some true
+        }
 
     let cleanDocsCache () = Fsdocs.cleanCache rootDirectory
 
@@ -221,11 +224,13 @@ module DocsTool =
 
             { bp with
                 Output = Some watchDocsDir
-                Strict = None }
+                Strict = None
+            }
 
         Fsdocs.watch fsDocsDotnetOptions (fun p ->
             { p with
-                BuildCommandParams = Some(buildParams p.BuildCommandParams) })
+                BuildCommandParams = Some(buildParams p.BuildCommandParams)
+            })
 
 
 let allReleaseChecks () =
@@ -269,7 +274,8 @@ let dotnetRestore _ =
                 (fun c ->
                     { c with
                         MSBuildParams = disableBinLog c.MSBuildParams
-                        Common = c.Common |> DotNet.Options.withCustomParams (Some(args)) })
+                        Common = c.Common |> DotNet.Options.withCustomParams (Some(args))
+                    })
                 dir)
     |> Seq.iter (retryIfInCI 10)
 
@@ -293,7 +299,8 @@ let dotnetBuild ctx =
             { c with
                 MSBuildParams = disableBinLog c.MSBuildParams
                 Configuration = configuration (ctx.Context.AllExecutingTargets)
-                Common = c.Common |> DotNet.Options.withAdditionalArgs args })
+                Common = c.Common |> DotNet.Options.withAdditionalArgs args
+            })
         sln
 
 let fsharpAnalyzers _ =
@@ -303,11 +310,13 @@ let fsharpAnalyzers _ =
     !!srcGlob
     |> Seq.iter (fun proj ->
         let args =
-            [ FSharpAnalyzers.Analyzers_Path(rootDirectory </> "packages/analyzers")
-              FSharpAnalyzers.Arguments.Project proj
-              FSharpAnalyzers.Arguments.Fail_On_Warnings [ "BDH0002" ]
-              FSharpAnalyzers.Arguments.Ignore_Files [ "*AssemblyInfo.fs" ]
-              FSharpAnalyzers.Verbose ]
+            [
+                FSharpAnalyzers.Analyzers_Path(rootDirectory </> "packages/analyzers")
+                FSharpAnalyzers.Arguments.Project proj
+                FSharpAnalyzers.Arguments.Fail_On_Warnings [ "BDH0002" ]
+                FSharpAnalyzers.Arguments.Ignore_Files [ "*AssemblyInfo.fs" ]
+                FSharpAnalyzers.Verbose
+            ]
             |> argParser.PrintCommandLineArgumentsFlat
 
         dotnet.fsharpAnalyzer id args)
@@ -320,15 +329,17 @@ let dotnetTest ctx =
         ctx.Context.TryFindTarget("GenerateCoverageReport").IsSome
 
     let args =
-        [ "--no-build"
-          if enableCodeCoverage || isGenerateCoverageReport then
-              sprintf "/p:AltCover=true"
+        [
+            "--no-build"
+            if enableCodeCoverage || isGenerateCoverageReport then
+                sprintf "/p:AltCover=true"
 
-              if not isGenerateCoverageReport then
-                  sprintf "/p:AltCoverThreshold=%d" coverageThresholdPercent
+                if not isGenerateCoverageReport then
+                    sprintf "/p:AltCoverThreshold=%d" coverageThresholdPercent
 
-              sprintf "/p:AltCoverAssemblyExcludeFilter=%s" excludeCoverage
-              "/p:AltCoverLocalSource=true" ]
+                sprintf "/p:AltCoverAssemblyExcludeFilter=%s" excludeCoverage
+                "/p:AltCoverLocalSource=true"
+        ]
 
     DotNet.test
         (fun c ->
@@ -336,7 +347,8 @@ let dotnetTest ctx =
             { c with
                 MSBuildParams = disableBinLog c.MSBuildParams
                 Configuration = configuration (ctx.Context.AllExecutingTargets)
-                Common = c.Common |> DotNet.Options.withAdditionalArgs args })
+                Common = c.Common |> DotNet.Options.withAdditionalArgs args
+            })
         sln
 
 let generateCoverageReport _ =
@@ -345,13 +357,15 @@ let generateCoverageReport _ =
     let sourceDirs = !!srcGlob |> Seq.map Path.getDirectory |> String.concat ";"
 
     let independentArgs =
-        [ sprintf "-reports:\"%s\"" coverageReports
-          sprintf "-targetdir:\"%s\"" coverageReportDir
-          // Add source dir
-          sprintf "-sourcedirs:\"%s\"" sourceDirs
-          // Ignore Tests and if AltCover.Recorder.g sneaks in
-          sprintf "-assemblyfilters:\"%s\"" "-*.Tests;-AltCover.Recorder.g"
-          sprintf "-Reporttypes:%s" "Html" ]
+        [
+            sprintf "-reports:\"%s\"" coverageReports
+            sprintf "-targetdir:\"%s\"" coverageReportDir
+            // Add source dir
+            sprintf "-sourcedirs:\"%s\"" sourceDirs
+            // Ignore Tests and if AltCover.Recorder.g sneaks in
+            sprintf "-assemblyfilters:\"%s\"" "-*.Tests;-AltCover.Recorder.g"
+            sprintf "-Reporttypes:%s" "Html"
+        ]
 
     let args = independentArgs |> String.concat " "
 
@@ -399,14 +413,16 @@ let generateAssemblyInfo _ =
         | _ -> "release"
 
     let getAssemblyInfoAttributes projectName =
-        [ AssemblyInfo.Title(projectName)
-          AssemblyInfo.Product productName
-          AssemblyInfo.Version latestEntry.AssemblyVersion
-          AssemblyInfo.Metadata("ReleaseDate", latestEntry.Date.Value.ToString("o"))
-          AssemblyInfo.FileVersion latestEntry.AssemblyVersion
-          AssemblyInfo.InformationalVersion latestEntry.AssemblyVersion
-          AssemblyInfo.Metadata("ReleaseChannel", releaseChannel)
-          AssemblyInfo.Metadata("GitHash", Git.Information.getCurrentSHA1 (null)) ]
+        [
+            AssemblyInfo.Title(projectName)
+            AssemblyInfo.Product productName
+            AssemblyInfo.Version latestEntry.AssemblyVersion
+            AssemblyInfo.Metadata("ReleaseDate", latestEntry.Date.Value.ToString("o"))
+            AssemblyInfo.FileVersion latestEntry.AssemblyVersion
+            AssemblyInfo.InformationalVersion latestEntry.AssemblyVersion
+            AssemblyInfo.Metadata("ReleaseChannel", releaseChannel)
+            AssemblyInfo.Metadata("GitHash", Git.Information.getCurrentSHA1 (null))
+        ]
 
     let getProjectDetails (projectPath: string) =
         let projectName = IO.Path.GetFileNameWithoutExtension(projectPath)
@@ -426,18 +442,22 @@ let dotnetPack ctx =
     let releaseNotes = Changelog.mkReleaseNotes changelog latestEntry gitHubRepoUrl
 
     let args =
-        [ $"/p:PackageVersion={latestEntry.NuGetVersion}"
-          $"/p:PackageReleaseNotes=\"{releaseNotes}\"" ]
+        [
+            $"/p:PackageVersion={latestEntry.NuGetVersion}"
+            $"/p:PackageReleaseNotes=\"{releaseNotes}\""
+        ]
 
     DotNet.pack
         (fun c ->
             { c with
                 MSBuildParams =
                     { (disableBinLog c.MSBuildParams) with
-                        Properties = [ ("IsNuGet", "true") ] }
+                        Properties = [ ("IsNuGet", "true") ]
+                    }
                 Configuration = configuration (ctx.Context.AllExecutingTargets)
                 OutputPath = Some distDir
-                Common = c.Common |> DotNet.Options.withAdditionalArgs args })
+                Common = c.Common |> DotNet.Options.withAdditionalArgs args
+            })
         dotNetPackTarget
 
 let sourceLinkTest _ =
@@ -454,13 +474,15 @@ let publishToNuget _ =
     let setNugetPushParams (c: NuGet.NuGet.NuGetPushParams) =
         { c with
             ApiKey = nugetToken
-            Source = Some(publishUrl) }
+            Source = Some(publishUrl)
+        }
 
     !!distGlob
     |> Seq.iter (
         DotNet.nugetPush (fun (c: DotNet.NuGetPushOptions) ->
             { c with
-                PushParams = setNugetPushParams c.PushParams })
+                PushParams = setNugetPushParams c.PushParams
+            })
     )
 
 let gitRelease _ =

@@ -271,14 +271,16 @@ module JsonSchemaProviderTests =
     let tests =
         testList
             "JsonSchemaProvider.Tests.JsonSchemaProviderTests"
-            [ validRecordShouldBeParsed
-              createMethodShouldReturnRecord
-              requiredPropertiesShouldNotBeParsedIntoOption
-              createMethodFromFileSchemaShouldReturnRecord
-              validationErrorShouldBeDetectedByCreate
-              validationErrorShouldBeDetectedByParse
-              valueFromNestedObjectsShouldBeCreated
-              selectFromNumberArrayShouldYieldInputValue
-              selectFromIntegerArrayShouldYieldInputValue
-              selectFromNestedArrayShouldYieldInputValue
-              selectFromNestedArrayWithObjectItemsShouldYieldInputValue ]
+            [
+                validRecordShouldBeParsed
+                createMethodShouldReturnRecord
+                requiredPropertiesShouldNotBeParsedIntoOption
+                createMethodFromFileSchemaShouldReturnRecord
+                validationErrorShouldBeDetectedByCreate
+                validationErrorShouldBeDetectedByParse
+                valueFromNestedObjectsShouldBeCreated
+                selectFromNumberArrayShouldYieldInputValue
+                selectFromIntegerArrayShouldYieldInputValue
+                selectFromNestedArrayShouldYieldInputValue
+                selectFromNestedArrayWithObjectItemsShouldYieldInputValue
+            ]

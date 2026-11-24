@@ -155,11 +155,19 @@ printfn "%A" (nawoi1.values.Value[1][1]).propB
 printfn
     "%A"
     (NestedArrayWithObjectItems.Create(
-        [ [ NestedArrayWithObjectItems.valuesObj.Create()
-            NestedArrayWithObjectItems.valuesObj.Create(1, "x") ] ]
+        [
+            [
+                NestedArrayWithObjectItems.valuesObj.Create()
+                NestedArrayWithObjectItems.valuesObj.Create(1, "x")
+            ]
+        ]
     ))
 
 (NestedArrayWithObjectItems.Create(
-    [ [ NestedArrayWithObjectItems.valuesObj.Create()
-        NestedArrayWithObjectItems.valuesObj.Create(1, "x") ] ]
+    [
+        [
+            NestedArrayWithObjectItems.valuesObj.Create()
+            NestedArrayWithObjectItems.valuesObj.Create(1, "x")
+        ]
+    ]
 ))

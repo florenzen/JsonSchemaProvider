@@ -103,22 +103,32 @@ module SchemaConversionTests =
 
             let expected =
                 JsonObject(
-                    [ { Name = "values"
-                        Optional = true
-                        PropertyType =
-                          JsonArray(
-                              JsonArray(
-                                  JsonObject(
+                    [
+                        {
+                            Name = "values"
+                            Optional = true
+                            PropertyType =
+                                JsonArray(
+                                    JsonArray(
+                                        JsonObject(
 
-                                      [ { Name = "propA"
-                                          Optional = true
-                                          PropertyType = JsonInteger }
-                                        { Name = "propB"
-                                          Optional = true
-                                          PropertyType = JsonString } ]
-                                  )
-                              )
-                          ) } ]
+                                            [
+                                                {
+                                                    Name = "propA"
+                                                    Optional = true
+                                                    PropertyType = JsonInteger
+                                                }
+                                                {
+                                                    Name = "propB"
+                                                    Optional = true
+                                                    PropertyType = JsonString
+                                                }
+                                            ]
+                                        )
+                                    )
+                                )
+                        }
+                    ]
                 )
 
             Expect.equal actual expected ""
@@ -131,51 +141,93 @@ module SchemaConversionTests =
                 parseJsonSchema nestedObjects |> jsonObjectToFSharpClassTree "NestedObjects"
 
             let expected =
-                { Name = "NestedObjects"
-                  Properties =
-                    [ { Name = "header"
-                        Optional = true
-                        FSharpType = FSharpClass("header") }
-                      { Name = "body"
-                        Optional = false
-                        FSharpType = FSharpClass("body") } ]
-                  NestedClasses =
-                    [ { Name = "header"
-                        Properties =
-                          [ { Name = "id"
-                              Optional = false
-                              FSharpType = FSharpInt }
-                            { Name = "sender"
-                              Optional = false
-                              FSharpType = FSharpString }
-                            { Name = "resend"
-                              Optional = true
-                              FSharpType = FSharpBool }
-                            { Name = "time"
-                              Optional = true
-                              FSharpType = FSharpClass("time") } ]
-                        NestedClasses =
-                          [ { Name = "time"
-                              Properties =
-                                [ { Name = "hour"
-                                    Optional = false
-                                    FSharpType = FSharpInt }
-                                  { Name = "minute"
-                                    Optional = false
-                                    FSharpType = FSharpInt }
-                                  { Name = "second"
-                                    Optional = false
-                                    FSharpType = FSharpInt } ]
-                              NestedClasses = [] } ] }
-                      { Name = "body"
-                        Properties =
-                          [ { Name = "length"
-                              Optional = false
-                              FSharpType = FSharpInt }
-                            { Name = "payload"
-                              Optional = false
-                              FSharpType = FSharpString } ]
-                        NestedClasses = [] } ] }
+                {
+                    Name = "NestedObjects"
+                    Properties =
+                        [
+                            {
+                                Name = "header"
+                                Optional = true
+                                FSharpType = FSharpClass("header")
+                            }
+                            {
+                                Name = "body"
+                                Optional = false
+                                FSharpType = FSharpClass("body")
+                            }
+                        ]
+                    NestedClasses =
+                        [
+                            {
+                                Name = "header"
+                                Properties =
+                                    [
+                                        {
+                                            Name = "id"
+                                            Optional = false
+                                            FSharpType = FSharpInt
+                                        }
+                                        {
+                                            Name = "sender"
+                                            Optional = false
+                                            FSharpType = FSharpString
+                                        }
+                                        {
+                                            Name = "resend"
+                                            Optional = true
+                                            FSharpType = FSharpBool
+                                        }
+                                        {
+                                            Name = "time"
+                                            Optional = true
+                                            FSharpType = FSharpClass("time")
+                                        }
+                                    ]
+                                NestedClasses =
+                                    [
+                                        {
+                                            Name = "time"
+                                            Properties =
+                                                [
+                                                    {
+                                                        Name = "hour"
+                                                        Optional = false
+                                                        FSharpType = FSharpInt
+                                                    }
+                                                    {
+                                                        Name = "minute"
+                                                        Optional = false
+                                                        FSharpType = FSharpInt
+                                                    }
+                                                    {
+                                                        Name = "second"
+                                                        Optional = false
+                                                        FSharpType = FSharpInt
+                                                    }
+                                                ]
+                                            NestedClasses = []
+                                        }
+                                    ]
+                            }
+                            {
+                                Name = "body"
+                                Properties =
+                                    [
+                                        {
+                                            Name = "length"
+                                            Optional = false
+                                            FSharpType = FSharpInt
+                                        }
+                                        {
+                                            Name = "payload"
+                                            Optional = false
+                                            FSharpType = FSharpString
+                                        }
+                                    ]
+                                NestedClasses = []
+                            }
+                        ]
+                }
 
             Expect.equal actual expected ""
         }
@@ -187,21 +239,37 @@ module SchemaConversionTests =
                 |> jsonObjectToFSharpClassTree "NestedArrayWithObjectItems"
 
             let expected =
-                { Name = "NestedArrayWithObjectItems"
-                  Properties =
-                    [ { Name = "values"
-                        Optional = true
-                        FSharpType = FSharpList(FSharpList(FSharpClass("values"))) } ]
-                  NestedClasses =
-                    [ { Name = "values"
-                        Properties =
-                          [ { Name = "propA"
-                              Optional = true
-                              FSharpType = FSharpInt }
-                            { Name = "propB"
-                              Optional = true
-                              FSharpType = FSharpString } ]
-                        NestedClasses = [] } ] }
+                {
+                    Name = "NestedArrayWithObjectItems"
+                    Properties =
+                        [
+                            {
+                                Name = "values"
+                                Optional = true
+                                FSharpType = FSharpList(FSharpList(FSharpClass("values")))
+                            }
+                        ]
+                    NestedClasses =
+                        [
+                            {
+                                Name = "values"
+                                Properties =
+                                    [
+                                        {
+                                            Name = "propA"
+                                            Optional = true
+                                            FSharpType = FSharpInt
+                                        }
+                                        {
+                                            Name = "propB"
+                                            Optional = true
+                                            FSharpType = FSharpString
+                                        }
+                                    ]
+                                NestedClasses = []
+                            }
+                        ]
+                }
 
             Expect.equal actual expected ""
         }
@@ -210,6 +278,8 @@ module SchemaConversionTests =
     let tests =
         testList
             "JsonSchemaProvider.Tests.SchemaConversionTests"
-            [ nestedArrayWithObjectItemsShouldBeParsedCorrectly
-              nestedArrayWithObjectItemsShouldBeClassTreeWithTwoClasses
-              nestedObjectsShouldBeClassTreeWithFourClasses ]
+            [
+                nestedArrayWithObjectItemsShouldBeParsedCorrectly
+                nestedArrayWithObjectItemsShouldBeClassTreeWithTwoClasses
+                nestedObjectsShouldBeClassTreeWithFourClasses
+            ]

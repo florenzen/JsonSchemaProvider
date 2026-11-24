@@ -68,7 +68,8 @@ let mkReleaseNotes changelog (latestEntry: Changelog.ChangelogEntry) gitHubRepoU
             | Some desc -> sprintf "%s\n\n%s" (desc.Trim()) linkReference
 
         { latestEntry with
-            Description = Some description }
+            Description = Some description
+        }
             .ToString()
 
 let getVersionNumber envVarName ctx =
@@ -178,22 +179,28 @@ let updateChangelog changelogPath (changelog: Changelog.Changelog) gitHubRepoUrl
         changelog.References
         |> List.filter (fun ref ->
             match ref with
-            | { SemVer = Changelog.ReferenceVersion.UnreleasedRef } -> false
+            | {
+                  SemVer = Changelog.ReferenceVersion.UnreleasedRef
+              } -> false
             | _ -> true)
 
     let linkReferenceForUnreleased =
         sprintf "%scompare/%s...%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString) "HEAD"
 
     let newUnreleased =
-        { Changelog.Reference.SemVer = Changelog.ReferenceVersion.UnreleasedRef
-          Changelog.Reference.RepoUrl = Uri(linkReferenceForUnreleased) }
+        {
+            Changelog.Reference.SemVer = Changelog.ReferenceVersion.UnreleasedRef
+            Changelog.Reference.RepoUrl = Uri(linkReferenceForUnreleased)
+        }
 
     let linkReferenceForNewVersion =
         sprintf "%s/releases/tag/%s" gitHubRepoUrl (tagFromVersionNumber newVersion.AsString)
 
     let newVersionReference =
-        { Changelog.Reference.SemVer = Changelog.ReferenceVersion.SemVerRef newVersion
-          Changelog.Reference.RepoUrl = Uri(linkReferenceForNewVersion) }
+        {
+            Changelog.Reference.SemVer = Changelog.ReferenceVersion.SemVerRef newVersion
+            Changelog.Reference.RepoUrl = Uri(linkReferenceForNewVersion)
+        }
 
     let newChangelog =
         Changelog.Changelog.New(

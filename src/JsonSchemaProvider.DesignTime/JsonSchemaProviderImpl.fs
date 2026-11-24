@@ -42,8 +42,10 @@ type JsonSchemaProviderImpl(config: TypeProviderConfig) as this =
     let thisAssembly = Assembly.GetExecutingAssembly()
 
     let staticParams =
-        [ ProvidedStaticParameter("schema", typeof<string>, "")
-          ProvidedStaticParameter("schemaFile", typeof<string>, "") ]
+        [
+            ProvidedStaticParameter("schema", typeof<string>, "")
+            ProvidedStaticParameter("schemaFile", typeof<string>, "")
+        ]
 
     let runtimeType = typeof<NullableJsonValue>
 

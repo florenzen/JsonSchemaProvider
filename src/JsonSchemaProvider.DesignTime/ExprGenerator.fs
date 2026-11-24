@@ -96,9 +96,11 @@ module ExprGenerator =
 
     let generatePropertyGetter
         (classMap: Map<string, ProvidedTypeDefinition>)
-        { Name = name
-          Optional = optional
-          FSharpType = fSharpType }
+        {
+            Name = name
+            Optional = optional
+            FSharpType = fSharpType
+        }
         : Expr list -> Expr =
         let plainPropertyRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
 
@@ -167,20 +169,31 @@ module ExprGenerator =
             let elseBranch =
                 Expr.NewArray(
                     typeof<string * JsonValue>,
-                    [ Expr.NewTuple(
-                          [ Expr.Value(name)
-                            Expr.Application(generateRuntimeTypeToJsonValConversion classMap optional fSharpType, arg) ]
-                      ) ]
+                    [
+                        Expr.NewTuple(
+                            [
+                                Expr.Value(name)
+                                Expr.Application(
+                                    generateRuntimeTypeToJsonValConversion classMap optional fSharpType,
+                                    arg
+                                )
+                            ]
+                        )
+                    ]
                 )
 
             Expr.IfThenElse(isNull, thenBranch, elseBranch)
         else
             Expr.NewArray(
                 typeof<string * JsonValue>,
-                [ Expr.NewTuple(
-                      [ Expr.Value(name)
-                        Expr.Application(generateRuntimeTypeToJsonValConversion classMap optional fSharpType, arg) ]
-                  ) ]
+                [
+                    Expr.NewTuple(
+                        [
+                            Expr.Value(name)
+                            Expr.Application(generateRuntimeTypeToJsonValConversion classMap optional fSharpType, arg)
+                        ]
+                    )
+                ]
             )
 
     let generateCreateInvokeCode
@@ -194,11 +207,15 @@ module ExprGenerator =
             let elementType = typedefof<(string * JsonValue)[]>
 
             let elements =
-                [ for ({ Name = name
-                         Optional = optional
-                         FSharpType = fSharpType },
-                       arg) in List.zip properties args ->
-                      generatePropertyCreation classMap name optional fSharpType arg ]
+                [
+                    for ({
+                             Name = name
+                             Optional = optional
+                             FSharpType = fSharpType
+                         },
+                         arg) in List.zip properties args ->
+                        generatePropertyCreation classMap name optional fSharpType arg
+                ]
 
             let fields = Expr.NewArray(elementType, elements)
 

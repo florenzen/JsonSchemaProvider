@@ -82,26 +82,28 @@ module Fsdocs =
 
         /// Parameter default values.
         static member Default =
-            { Input = None
-              Projects = None
-              Output = None
-              NoApiDocs = None
-              Eval = None
-              SaveImages = None
-              LineNumbers = None
-              Parameters = None
-              IgnoreProjects = None
-              Qualify = None
-              NoPublic = None
-              NoDefaultContent = None
-              Clean = None
-              Version = None
-              Properties = None
-              FscOptions = None
-              Strict = None
-              SourceFolder = None
-              SourceRepository = None
-              MdComments = None }
+            {
+                Input = None
+                Projects = None
+                Output = None
+                NoApiDocs = None
+                Eval = None
+                SaveImages = None
+                LineNumbers = None
+                Parameters = None
+                IgnoreProjects = None
+                Qualify = None
+                NoPublic = None
+                NoDefaultContent = None
+                Clean = None
+                Version = None
+                Properties = None
+                FscOptions = None
+                Strict = None
+                SourceFolder = None
+                SourceRepository = None
+                MdComments = None
+            }
 
     /// <summary>
     /// Fsdocs watch command parameters and options
@@ -126,11 +128,13 @@ module Fsdocs =
 
         /// Parameter default values.
         static member Default =
-            { NoServer = None
-              NoLaunch = None
-              Open = None
-              Port = None
-              BuildCommandParams = None }
+            {
+                NoServer = None
+                NoLaunch = None
+                Open = None
+                Port = None
+                BuildCommandParams = None
+            }
 
     let internal buildBuildCommandParams (buildParams: BuildCommandParams) =
         let buildSubstitutionParameters (subParameters: seq<string * string>) =
