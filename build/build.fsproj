@@ -13,16 +13,19 @@
 
   <ItemGroup>
     <PackageReference Include="Argu" Version="6.2.5" />
-    <PackageReference Include="Fake.Api.GitHub" Version="6.1.4" />
-    <PackageReference Include="Fake.BuildServer.GitHubActions" Version="6.1.4" />
+    <PackageReference Include="Fake.Api.GitHub" Version="6.2.0" />
+    <PackageReference Include="Fake.BuildServer.GitHubActions" Version="6.2.0" />
     <PackageReference Include="Fake.Core" Version="5.16.0" />
-    <PackageReference Include="Fake.Core.ReleaseNotes" Version="6.1.4" />
-    <PackageReference Include="Fake.Core.Target" Version="6.1.4" />
-    <PackageReference Include="Fake.DotNet.AssemblyInfoFile" Version="6.1.4" />
-    <PackageReference Include="Fake.DotNet.Cli" Version="6.1.4" />
-    <PackageReference Include="Fake.DotNet.NuGet" Version="6.1.4" />
-    <PackageReference Include="Fake.Tools.Git" Version="6.1.4" />
-    <PackageReference Include="System.Drawing.Common" Version="10.0.1" />
+    <PackageReference Include="Fake.Core.ReleaseNotes" Version="6.2.0" />
+    <PackageReference Include="Fake.Core.Target" Version="6.2.0" />
+    <PackageReference Include="Fake.DotNet.AssemblyInfoFile" Version="6.2.0" />
+    <PackageReference Include="Fake.DotNet.Cli" Version="6.2.0" />
+    <PackageReference Include="Fake.DotNet.NuGet" Version="6.2.0" />
+    <PackageReference Include="Fake.Tools.Git" Version="6.2.0" />
+    <PackageReference Include="System.Drawing.Common" Version="11.0.0" />
+    <!-- Pin transitive dependencies of Fake.DotNet.NuGet to fix GHSA-g4vj-cjjj-v7hg -->
+    <PackageReference Include="NuGet.Packaging" Version="6.12.5" />
+    <PackageReference Include="NuGet.Protocol" Version="6.12.5" />
   </ItemGroup>
 
 </Project>
