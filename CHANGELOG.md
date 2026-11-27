@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Updated packages (especially NJsonSchema to 11.6.2)
+- Update dependencies (especially NJsonSchema to 11.6.2)
 
 ## [0.1.2] - 2025-12-27
 
