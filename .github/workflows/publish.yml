@@ -20,10 +20,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.5
 
-      - name: Setup .NET 10
+      - name: Setup .NET 11
         uses: actions/setup-dotnet@v4.0.0
         with:
-          dotnet-version: 10.x
+          dotnet-version: 11.x
 
       - name: NuGet login (OIDC → temp API key)
         uses: NuGet/login@v1

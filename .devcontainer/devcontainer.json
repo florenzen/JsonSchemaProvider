@@ -1,6 +1,6 @@
 {
-    "name": "dotnet10.0",
-    "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+    "name": "dotnet11.0",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:11.0",
     "postAttachCommand": "git config --global --add safe.directory /workspaces/JsonSchemaProvider && dotnet tool restore && dotnet restore",
     "customizations": {
         "vscode": {

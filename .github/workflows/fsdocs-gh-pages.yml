@@ -31,10 +31,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5.0.0
 
-      - name: Setup .NET 10
+      - name: Setup .NET 11
         uses: actions/setup-dotnet@v4.0.0
         with:
-          dotnet-version: 10.x
+          dotnet-version: 11.x
       
       - name: Build Docs
         run: ./build.sh BuildDocs
