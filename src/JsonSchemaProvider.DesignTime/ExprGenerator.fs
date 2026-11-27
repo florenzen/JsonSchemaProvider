@@ -75,7 +75,7 @@ module ExprGenerator =
             let innerRuntimeType = fSharpTypeToRuntimeType classMap innerType
             let listRuntimeType = fSharpTypeToRuntimeType classMap fSharpType
 
-            let runtimeObjVar = Var($"runtimeObj{Guid.NewGuid}", listRuntimeType)
+            let runtimeObjVar = Var($"runtimeObj{Guid.NewGuid()}", listRuntimeType)
 
             let mappedList =
                 CommonExprs.callListMap generateForInner (Expr.Var(runtimeObjVar)) innerRuntimeType typeof<JsonValue>
